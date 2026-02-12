@@ -221,13 +221,17 @@ const SCENARIOS = [
 // ═══════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════
+function uuid(){return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c==='x'?r:(r&0x3|0x8)).toString(16)})}
+const RUN_ID=uuid();
+
 const ST = {
   cond:null, cur:0,
   phase:'welcome', // welcome|scenario|likert1|likert2|manipCheck|done
   t0:null, tEnd:null,
   D:{}, R:{}, C:{}, ts:{},
   chatHistory:[], chatRounds:0, choiceMade:false,
-  MC:{}, allChatLogs:{}
+  MC:{}, allChatLogs:{},
+  chatMsgCount:{}, chatTimeSec:{}, chatFirstMsgTime:{}
 };
 
 // ═══════════════════════════════════════════════════
@@ -257,17 +261,22 @@ const $=id=>document.getElementById(id), app=$('app');
 // ═══════════════════════════════════════════════════
 function sysPrompt(idx){
   const s=SCENARIOS[idx];
-  return `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי.
+  const basePrompt = `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי.
 הקשר התרחיש: ${s.llmContext}
 ${s.llmInstruction}
 
 כללים קריטיים:
 - תמיד עמוד על ההמלצה שלך: ${s.llmRec}. אסור לשנות אותה.
-- מותר להסביר שיקולים, trade-offs, ומושגים מהנתונים.
 - אסור לומר "נכון/לא נכון", לשפוט בחירה, או לדרג אפשרויות.
 - אסור לתת דוגמת קלט.
 - תשובות קצרות: עד 3 משפטים.
-- אם נשאלת שאלה שלא קשורה לתרחיש — החזר בעדינות לנושא.`}
+- אם נשאלת שאלה שלא קשורה לתרחיש — החזר בעדינות לנושא.`;
+
+  if(ST.cond==='B'){
+    return basePrompt + `\n- חשוב מאוד: אסור להסביר למה, אסור לנמק, אסור לפרט שיקולים. תענה בצורה עניינית וקצרה בלבד, בלי הסברים.`;
+  }
+  return basePrompt + `\n- מותר להסביר שיקולים, trade-offs, ומושגים מהנתונים.`;
+}
 
 async function callLLM(messages){
   if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
@@ -305,7 +314,7 @@ async function saveToSheets(row){
     const payload=encodeURIComponent(JSON.stringify(lite));
     const cbName='sv_'+Date.now();
     return new Promise((resolve)=>{
-      const timeout=setTimeout(()=>{resolve({ok:true});cleanup()},12000);
+      const timeout=setTimeout(()=>{resolve({ok:false,reason:'timeout'});cleanup()},12000);
       window[cbName]=function(d){clearTimeout(timeout);resolve({ok:true});cleanup()};
       function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
       const s=document.createElement('script');
@@ -321,7 +330,15 @@ function buildRow(){
   for(let i=0;i<5;i++){const d=ST.D[`D${i+1}`]||'',s=d?SCENARIOS[i].score(d):0;sc[`TaskScore_D${i+1}`]=s;total+=s}
   const urlParam=(new URLSearchParams(location.search).get('condition')||'').toLowerCase();
   const condSource=urlParam==='random'?'random':urlParam?'url':'manual';
-  const row={timestamp:new Date().toISOString(),condition:ST.cond,condition_source:condSource,
+  const row={
+    run_id:RUN_ID,
+    timestamp:new Date().toISOString(),
+    condition:ST.cond,condition_source:condSource,
+    completion_status:'finished',
+    last_step_reached:'done',
+    started_at:new Date(ST.t0).toISOString(),
+    ended_at:new Date(ST.tEnd).toISOString(),
+    tz_offset:new Date().getTimezoneOffset(),
     D1:ST.D.D1||'',D2:ST.D.D2||'',D3:ST.D.D3||'',D4:ST.D.D4||'',D5:ST.D.D5||'',
     R1:ST.R.R1||'',R2:ST.R.R2||'',R3:ST.R.R3||'',R4:ST.R.R4||'',R5:ST.R.R5||'',
     C1:ST.C.C1||'',C2:ST.C.C2||'',C3:ST.C.C3||'',C4:ST.C.C4||'',C5:ST.C.C5||''};
@@ -330,6 +347,16 @@ function buildRow(){
     const ts=ST.ts[`S${i}`];
     row[`S${i}_duration_sec`]=ts&&ts.end?Math.round((ts.end-ts.start)/1000):'';
   }
+  // Chat metrics
+  const chatEnabled=(ST.cond==='B'||ST.cond==='C')?1:0;
+  row.chat_enabled=chatEnabled;
+  for(let i=1;i<=5;i++){
+    const sKey=`S${i}`;
+    row[`chat_msg_count_S${i}`]=ST.chatMsgCount[sKey]||0;
+    const firstMsg=ST.chatFirstMsgTime[sKey];
+    const scenEnd=ST.ts[sKey]&&ST.ts[sKey].end;
+    row[`chat_time_S${i}`]=firstMsg&&scenEnd?Math.round((scenEnd-firstMsg)/1000):0;
+  }
   Object.assign(row,sc);
   row.TotalScore=total;
   row.TotalScoreNorm=Math.round(total/50*1000)/10;
@@ -337,6 +364,11 @@ function buildRow(){
   row.MC_transparency=ST.MC.MC_transparency||'';
   row.MC_explainability=ST.MC.MC_explainability||'';
   row.MC_trust=ST.MC.MC_trust||'';
+  row.attention_check=ST.MC.attention_check||'';
+  // Device info (non-PII)
+  const ua=navigator.userAgent;
+  row.device_type=/Mobi|Android/i.test(ua)?'mobile':'desktop';
+  row.browser=(/Chrome/.test(ua)&&!/Edg/.test(ua))?'Chrome':/Safari/.test(ua)&&!/Chrome/.test(ua)?'Safari':/Firefox/.test(ua)?'Firefox':/Edg/.test(ua)?'Edge':'other';
   row.chat_logs=JSON.stringify(ST.allChatLogs);
   return row;
 }
@@ -364,8 +396,8 @@ function rWelcome(){
     <div style="text-align:right;max-width:500px;margin:20px auto 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.9">
       <b style="color:var(--text)">🔒 פרטיות והסכמה</b><br>
       • ההשתתפות אנונימית — לא נאסף שם, אימייל, או מידע מזהה.<br>
-      • הנתונים שנשמרים: בחירות, זמנים, דירוגים, ותמלול השיח עם המנהל הדיגיטלי.<br>
-      • חלק מהתרחישים כוללים שיח עם מערכת AI (GPT). תוכן השיח נשלח לשרת OpenAI לצורך עיבוד בלבד ואינו נשמר אצלם.<br>
+      • הנתונים שנשמרים: בחירות, זמנים ודירוגים.<br>
+      • חלק מהתרחישים כוללים שיח עם מערכת AI (GPT). תוכן השיח נשלח לשרת OpenAI לצורך עיבוד בלבד ואינו נשמר.<br>
       • הנתונים ישמשו למחקר אקדמי בלבד ולא יועברו לצד שלישי.<br>
       • ייתכן שחלק מהמידע שיוצג לא ישקף את הפתרון האופטימלי — זהו חלק מעיצוב המחקר.<br>
       <div style="margin-top:10px">
@@ -420,7 +452,7 @@ async function rScenario(){
     <div class="chat-messages" id="chatMsgs">
       <div class="typing" id="typing"><span></span><span></span><span></span></div>
     </div>
-    ${ST.cond==='C'?`
+    ${ST.cond==='C'||ST.cond==='B'?`
     <div class="rounds-left" id="roundsLeft"></div>
     <div class="chat-input" id="chatInput" style="display:none">
       <input id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')sendChat()">
@@ -442,9 +474,10 @@ async function rScenario(){
     const msgs=buildLLMMessages(i, 'initial');
     const reply = await callLLM(msgs);
     ST.chatHistory.push({role:'assistant',content:reply});
-    $('typing').remove();
+    const typingEl=$('typing');
+    if(typingEl)typingEl.remove();
     addChatBubble(reply,'ai');
-    if(ST.cond==='C'){
+    if(ST.cond==='C'||ST.cond==='B'){
       $('chatInput').style.display='flex';
       updateRoundsLeft();
     }
@@ -469,6 +502,12 @@ async function sendChat(){
   const input=$('chatText');
   const txt=input.value.trim();
   if(!txt||ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+
+  // Track chat metrics
+  const sKey=`S${ST.cur+1}`;
+  if(!ST.chatMsgCount[sKey])ST.chatMsgCount[sKey]=0;
+  ST.chatMsgCount[sKey]++;
+  if(!ST.chatFirstMsgTime[sKey])ST.chatFirstMsgTime[sKey]=Date.now();
 
   addChatBubble(txt,'user');
   ST.chatHistory.push({role:'user',content:txt});
@@ -594,6 +633,11 @@ function rManipCheck(){
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
 
+      <div style="margin:24px 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border)">
+        <div class="likert-q">4. לצורך בקרת איכות — אנא סמן/י את המספר 4.</div>
+        <div class="likert-scale" id="mc4Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="attn" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      </div>
+
       <div class="error-msg" id="mcErr"></div>
       <button class="btn btn-primary" onclick="submitManipCheck()">סיום ✓</button>
     </div></div>`;
@@ -603,8 +647,9 @@ function submitManipCheck(){
   const mc1=document.querySelector('input[name="mc1"]:checked');
   const mc2=document.querySelector('input[name="mc2"]:checked');
   const mc3=document.querySelector('input[name="mc3"]:checked');
-  if(!mc1||!mc2||!mc3){$('mcErr').textContent='נא לענות על כל שלוש השאלות.';$('mcErr').classList.add('show');return}
-  ST.MC={MC_transparency:+mc1.value, MC_explainability:+mc2.value, MC_trust:+mc3.value};
+  const attn=document.querySelector('input[name="attn"]:checked');
+  if(!mc1||!mc2||!mc3||!attn){$('mcErr').textContent='נא לענות על כל השאלות.';$('mcErr').classList.add('show');return}
+  ST.MC={MC_transparency:+mc1.value, MC_explainability:+mc2.value, MC_trust:+mc3.value, attention_check:+attn.value===4?'pass':'fail'};
   ST.phase='done';go();
 }
 
