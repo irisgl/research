@@ -106,9 +106,9 @@
 // *** CONFIGURATION ***
 // ═══════════════════════════════════════════════════
 const CONFIG = {
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwe7lF2jBBTLf1nI72bs6tl-sCTq7MoF4NTva_qsvmY_WrIsiyAGos2cqrdd4DD0rHieA/exec',        // ← URL אחד בלבד. ראי הוראות בתחתית הקובץ.
+APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwe7lF2jBBTLf1nI72bs6tl-sCTq7MoF4NTva_qsvmY_WrIsiyAGos2cqrdd4DD0rHieA/exec',
   MODEL: 'gpt-4o-mini',      // gpt-4o-mini (~$0.01/participant) or gpt-4o
-  MAX_CHAT_ROUNDS: 5          // max follow-up questions per scenario
+  MAX_CHAT_ROUNDS: 3          // max follow-up questions per scenario
 };
 
 // ═══════════════════════════════════════════════════
@@ -272,14 +272,21 @@ ${s.llmInstruction}
 async function callLLM(messages){
   if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
   try{
-    const r=await fetch(CONFIG.APPS_SCRIPT_URL,{
-      method:'POST',
-      body:JSON.stringify({action:'chat',messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200}),
-      redirect:'follow'
+    const payload=encodeURIComponent(JSON.stringify({messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200}));
+    const cbName='cb_'+Date.now();
+    return new Promise((resolve)=>{
+      const timeout=setTimeout(()=>{resolve(getFallbackReply());cleanup()},15000);
+      window[cbName]=function(data){
+        clearTimeout(timeout);
+        resolve(data.reply||getFallbackReply());
+        cleanup();
+      };
+      function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
+      const script=document.createElement('script');
+      script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+      script.onerror=function(){clearTimeout(timeout);resolve(getFallbackReply());cleanup()};
+      document.body.appendChild(script);
     });
-    const text=await r.text();
-    try{const d=JSON.parse(text);return d.reply||getFallbackReply();}
-    catch(e){return text||getFallbackReply();}
   }catch(e){console.error('LLM error:',e);return getFallbackReply()}
 }
 
@@ -292,8 +299,9 @@ async function saveToSheets(row){
   if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
   try{await fetch(CONFIG.APPS_SCRIPT_URL,{
     method:'POST',
-    body:JSON.stringify({action:'save',data:row}),
-    redirect:'follow'
+    mode:'no-cors',
+    headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({data:row})
   });return{ok:true}}
   catch(e){return{ok:false,reason:e.message}}
 }
