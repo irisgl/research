@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>סימולציית מנהל דיגיטלי</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+  :root {
+    --bg:#f5f6fa;--card:#fff;--primary:#2d5be3;--primary-light:#e8edfb;
+    --primary-dark:#1a3fa0;--text:#1e2a3a;--text2:#5a6a7e;--border:#dfe3eb;
+    --success:#22a06b;--success-bg:#e3fcef;--error:#de350b;--error-bg:#ffebe6;
+    --ai-bg:#f0f4ff;--ai-border:#5b8def;--user-bg:#e8edfb;
+    --shadow:0 2px 12px rgba(0,0,0,.06);--radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Rubik',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
+  .container{max-width:720px;margin:0 auto;padding:24px 20px 60px}
+
+  /* Progress */
+  .progress-bar{display:flex;gap:6px;margin-bottom:28px}
+  .progress-step{flex:1;height:6px;border-radius:3px;background:var(--border);transition:background .4s}
+  .progress-step.done{background:var(--success)}.progress-step.active{background:var(--primary)}
+
+  /* Card */
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:32px 30px 28px;margin-bottom:20px;border:1px solid var(--border)}
+  .scenario-badge{display:inline-block;background:var(--primary);color:#fff;font-size:13px;font-weight:600;padding:5px 16px;border-radius:20px;margin-bottom:16px}
+  h1{font-size:26px;font-weight:700;margin-bottom:10px}
+  h2{font-size:21px;font-weight:600;margin-bottom:14px}
+  p,li{font-size:15px;color:var(--text2);margin-bottom:10px;line-height:1.8}
+  .bg-text{font-size:15px;color:var(--text);background:#f8f9fb;padding:16px 20px;border-radius:10px;border-right:4px solid var(--primary-light);margin-bottom:18px;line-height:1.9}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
+  th{background:var(--primary-light);color:var(--primary-dark);font-weight:600;padding:12px 14px;text-align:right;border-bottom:2px solid var(--primary);font-size:13px}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);text-align:right;font-size:14px}
+  tr:nth-child(even) td{background:#fafbfd}
+  tr:hover td{background:#f0f2f8}
+  .legend{font-size:13px;color:var(--text2);background:#f8f9fb;padding:10px 14px;border-radius:8px;margin:12px 0}
+  .task-text{font-size:16px;font-weight:600;color:var(--text);margin:16px 0 8px}
+  .options-text{font-size:14px;color:var(--text2);font-style:italic}
+
+  /* Chat */
+  .chat-area{margin:20px 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+  .chat-header{background:var(--ai-bg);padding:14px 20px;border-bottom:1px solid var(--ai-border);display:flex;align-items:center;gap:12px}
+  .chat-header .avatar{width:40px;height:40px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 2px 6px rgba(45,91,227,.3)}
+  .chat-header .name{font-weight:600;font-size:15px;color:var(--primary-dark)}
+  .chat-header .status{font-size:12px;color:var(--ai-border)}
+  .chat-messages{padding:20px;min-height:120px;max-height:450px;overflow-y:auto;background:#fafbfd;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:82%;padding:14px 18px;border-radius:16px;font-size:14.5px;line-height:1.8;white-space:pre-wrap;animation:msgIn .3s ease-out}
+  @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg.ai{background:var(--ai-bg);border:1px solid var(--ai-border);align-self:flex-start;border-top-right-radius:4px}
+  .msg.user{background:var(--user-bg);border:1px solid var(--primary-light);align-self:flex-end;border-top-left-radius:4px;color:var(--text)}
+  .msg.system{background:#fff8e1;border:1px solid #ffe082;align-self:center;text-align:center;font-size:13px;color:#6d4c00;max-width:90%;border-radius:10px}
+  .typing{display:flex;align-items:center;gap:4px;padding:8px 16px;align-self:flex-start}
+  .typing span{width:7px;height:7px;background:var(--ai-border);border-radius:50%;animation:blink 1.2s infinite}
+  .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+  .chat-input{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--border);background:#fff}
+  .chat-input input{flex:1;padding:11px 16px;font-size:15px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;transition:border .2s}
+  .chat-input input:focus{border-color:var(--primary)}
+  .chat-input button{padding:11px 24px;font-size:14px;font-weight:600;font-family:'Rubik',sans-serif;background:var(--primary);color:#fff;border:none;border-radius:10px;cursor:pointer;transition:background .2s;white-space:nowrap}
+  .chat-input button:hover{background:var(--primary-dark)}
+  .chat-input button:disabled{background:#b0bec5;cursor:not-allowed}
+
+  /* Choice input */
+  .choice-section{margin:20px 0;padding:20px;background:#f8f9fb;border-radius:var(--radius);border:1px solid var(--border)}
+  .choice-section label{display:block;font-weight:600;font-size:15px;margin-bottom:8px}
+  .choice-section input[type="text"]{width:100%;padding:12px 16px;font-size:18px;font-family:'Rubik',sans-serif;border:2px solid var(--border);border-radius:8px;direction:ltr;text-align:center;letter-spacing:2px;outline:none;transition:border .2s}
+  .choice-section input:focus{border-color:var(--primary)}
+  .error-msg{background:var(--error-bg);color:var(--error);padding:10px 16px;border-radius:8px;font-size:14px;margin:10px 0;display:none}
+  .error-msg.show{display:block}
+
+  /* Buttons */
+  .btn{display:block;width:100%;padding:14px;font-size:16px;font-weight:600;font-family:'Rubik',sans-serif;border:none;border-radius:10px;cursor:pointer;transition:all .2s;margin-top:12px}
+  .btn-primary{background:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-dark)}.btn-primary:active{transform:scale(.98)}
+  .btn-primary:disabled{background:#b0bec5;cursor:not-allowed}
+  .btn-secondary{background:transparent;color:var(--primary);border:2px solid var(--primary)}
+  .btn-secondary:hover{background:var(--primary-light)}
+
+  /* Likert */
+  .likert-q{font-size:16px;font-weight:600;margin-bottom:12px;color:var(--text)}
+  .likert-scale{display:flex;justify-content:space-between;gap:6px;margin:16px 0}
+  .likert-scale label{flex:1;text-align:center;cursor:pointer}
+  .likert-scale input[type="radio"]{display:none}
+  .likert-scale .lk{display:block;padding:12px 0;font-size:18px;font-weight:600;border:2px solid var(--border);border-radius:10px;transition:all .15s;color:var(--text2)}
+  .likert-scale input:checked+.lk{background:var(--primary);color:#fff;border-color:var(--primary);transform:scale(1.05)}
+  .likert-scale label:hover .lk{border-color:var(--primary);color:var(--primary)}
+  .likert-anchors{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-top:-6px}
+
+  /* Completion */
+  .completion-box{background:var(--success-bg);border:2px solid var(--success);border-radius:var(--radius);padding:28px;text-align:center;margin:20px 0}
+  .confirm-msg{background:var(--success-bg);color:var(--success);padding:12px 18px;border-radius:8px;font-weight:600;font-size:15px;margin:16px 0}
+  .micro-explain{font-size:14px;color:var(--text2);font-style:italic;margin:8px 0 16px}
+  .saving-status{font-size:13px;color:var(--text2);text-align:center;margin-top:8px}
+  .screen{animation:fadeIn .35s ease-out}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .rounds-left{font-size:12px;color:var(--text2);text-align:center;padding:4px}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+<script>
+// ═══════════════════════════════════════════════════
+// *** CONFIGURATION ***
+// ═══════════════════════════════════════════════════
+const CONFIG = {
+  OPENAI_API_KEY: '',         // ← API key from platform.openai.com
+  // ⚠️ SECURITY NOTE: In production, move API calls to a server-side proxy
+  // (e.g., Cloudflare Worker, Vercel Edge Function, or Apps Script)
+  // to avoid exposing the key in client-side code.
+  // See PROXY_URL option below as alternative to OPENAI_API_KEY.
+  PROXY_URL: '',              // ← Alternative: URL of your server-side proxy
+  GOOGLE_SHEETS_URL: '',      // ← Web App URL (see bottom of file)
+  MODEL: 'gpt-4o-mini',      // gpt-4o-mini (~$0.01/participant) or gpt-4o (~$0.05)
+  MAX_CHAT_ROUNDS: 3          // max follow-up questions per scenario
+};
+
+// ═══════════════════════════════════════════════════
+// SCENARIOS
+// ═══════════════════════════════════════════════════
+const SCENARIOS = [
+  // ── 1 ──
+  { title:"תעדוף פניות לקוחות", dKey:"D1",
+    background:"בוקר יום ראשון, 08:00. יש עומס בפתיחת השבוע, וב-09:00 המנהל הישיר מבקש עדכון מצב. חלק מהפניות רגישות לנטישה/תסכול, וחלקן עלולות להפוך להסלמה תפעולית אם יתעכבו.",
+    tableHTML:`<table><tr><th>#</th><th>תיאור</th><th>דחיפות</th><th>מורכבות</th><th>זמן טיפול</th><th>לקוח (שב"ר)</th></tr>
+<tr><td>1</td><td>שאלה על חיוב</td><td>2/5</td><td>קל</td><td>10 דק'</td><td>רגיל (4/5)</td></tr>
+<tr><td>2</td><td>מערכת לא נטענת</td><td>5/5</td><td>בינוני</td><td>30 דק'</td><td>VIP (3/5)</td></tr>
+<tr><td>3</td><td>בקשת פיצ'ר</td><td>1/5</td><td>קשה</td><td>45 דק'</td><td>חדש (5/5)</td></tr>
+<tr><td>4</td><td>באג – אובדן מידע</td><td>5/5</td><td>קשה</td><td>60 דק'</td><td>ותיק (2/5)</td></tr>
+<tr><td>5</td><td>שאלה טכנית</td><td>3/5</td><td>קל</td><td>15 דק'</td><td>רגיל (4/5)</td></tr></table>`,
+    legend:"דחיפות 1-5 · מורכבות: קל/בינוני/קשה · זמן טיפול: לנציג יחיד · שב\"ר: ציון לקוח (5 גבוה)",
+    task:"בחר/י 3 פניות לטיפול מיידי.", validOptions:"5 פניות, 3 נציגים זמינים לשעה הקרובה.",
+    inputLabel:"שלושה מספרים מופרדים בפסיקים (1-5):", placeholder:"לדוגמה: 1,3,4",
+    microExplanation:"בהחלטות תעדוף, המפתח הוא לאזן בין דחיפות תפעולית לניצול יעיל של זמן הנציגים.",
+    llmRec:"פניות 2, 4 ו-5",
+    llmContext:`5 פניות לקוחות, 3 נציגים זמינים לשעה.
+1: חיוב, דחיפות 2/5, קל, 10דק', רגיל 4/5.
+2: מערכת לא נטענת, דחיפות 5/5, בינוני, 30דק', VIP 3/5.
+3: בקשת פיצ'ר, דחיפות 1/5, קשה, 45דק', חדש 5/5.
+4: באג אובדן מידע, דחיפות 5/5, קשה, 60דק', ותיק 2/5.
+5: שאלה טכנית, דחיפות 3/5, קל, 15דק', רגיל 4/5.`,
+    llmInstruction:`ההמלצה שלך: פניות 2, 4 ו-5.
+שיקולים: דחיפות+VIP=סיכון נטישה; אובדן מידע=סיכון אמון; פנייה מהירה=מוריד עומס.`,
+    validate(v){const c=v.replace(/\s/g,''),m=c.match(/^([1-5]),([1-5]),([1-5])$/);if(!m)return null;const n=[m[1],m[2],m[3]];return new Set(n).size===3?n.join(''):null},
+    score(d){const ch=new Set(d.split('')),op=new Set(['2','4','5']),mu=new Set(['2','4']);if(eq(ch,op))return 10;const ct=inter(ch,op).size,hm=sub(mu,ch);return ct===2&&hm?7:ct===2?6:ct===1?4:0}
+  },
+  // ── 2 ──
+  { title:"בחירת \"עובד החודש\"", dKey:"D2",
+    background:"סוף חודש. צריך לבחור \"עובד החודש\" על בסיס נתוני ביצוע. הבחירה משפיעה על מוטיבציה ותפיסת הוגנות בצוות.",
+    tableHTML:`<table><tr><th>קוד</th><th>נציג/ה</th><th>שב"ר</th><th>זמן תגובה</th><th># פניות</th><th>מורכבות</th><th>זמינות</th></tr>
+<tr><td>R</td><td>רועי</td><td>4.8/5</td><td>3 דק'</td><td>180</td><td>45</td><td>20</td></tr>
+<tr><td>S</td><td>שקד</td><td>4.2/5</td><td>5 דק'</td><td>220</td><td>30</td><td>22</td></tr>
+<tr><td>Y</td><td>יעל</td><td>4.9/5</td><td>2 דק'</td><td>150</td><td>60</td><td>18</td></tr>
+<tr><td>D</td><td>דני</td><td>4.0/5</td><td>6 דק'</td><td>240</td><td>20</td><td>22</td></tr>
+<tr><td>M</td><td>מיה</td><td>4.5/5</td><td>4 דק'</td><td>200</td><td>50</td><td>21</td></tr></table>`,
+    legend:"שב\"ר: ממוצע חודשי · זמן תגובה: דקות · מורכבות: פניות מאתגרות · זמינות: ימי עבודה בחודש",
+    task:"בחר/י עובד/ת אחד/ת.", validOptions:"R (רועי) / S (שקד) / Y (יעל) / D (דני) / M (מיה)",
+    inputLabel:"אות אחת: R / S / Y / D / M", placeholder:"",
+    microExplanation:"בבחירת עובד מצטיין, האיזון הוא בין כמות לאיכות ובין נוכחות לעוצמת תרומה.",
+    llmRec:"Y (יעל)",
+    llmContext:`5 נציגים: R רועי 4.8/5 3דק' 180 45מורכבות 20ימים. S שקד 4.2/5 5דק' 220 30 22. Y יעל 4.9/5 2דק' 150 60 18. D דני 4.0/5 6דק' 240 20 22. M מיה 4.5/5 4דק' 200 50 21.`,
+    llmInstruction:`ההמלצה שלך: Y (יעל). שיקולים: שב"ר+תגובה מהיר; מורכבות=איכות; זמינות נמוכה מפוצה באיכות.`,
+    validate(v){const c=v.trim().toUpperCase();return'RSYDM'.includes(c)&&c.length===1?c:null},
+    score(d){return{Y:10,R:8,M:6,S:4,D:4}[d]||0}
+  },
+  // ── 3 ──
+  { title:"הקצאת תקציב לשיפור שירות", dKey:"D3",
+    background:"יש תקציב של 10,000 ₪ לשיפור שירות ברבעון הקרוב. מצפים לשיפור מורגש, והצוות תחת עומס ותהליכים לא יעילים.",
+    tableHTML:`<table><tr><th>קוד</th><th>פעולה</th><th>עלות</th><th>השפעה</th></tr>
+<tr><td>A</td><td>שדרוג CRM</td><td>7,000 ₪</td><td>8/10</td></tr>
+<tr><td>B</td><td>הדרכת נציגים</td><td>4,000 ₪</td><td>1/10</td></tr>
+<tr><td>C</td><td>בונוסים</td><td>5,000 ₪</td><td>4/10</td></tr>
+<tr><td>D</td><td>כלי ניתוח (BI)</td><td>3,000 ₪</td><td>5/10</td></tr></table>`,
+    legend:"השפעה: על עבודה יומיומית (10 גבוה) · 1-2 פעולות, עד 10,000 ₪",
+    task:"בחר/י צירוף אחד חוקי.", validOptions:"צירופים: A / AD / BD / BC",
+    inputLabel:"בדיוק אחד מתוך: A / AD / BD / BC", placeholder:"",
+    microExplanation:"בהקצאת תקציב, השיקול הוא איזון בין עוצמת השפעה לניצול מיטבי של המשאבים.",
+    llmRec:"AD",
+    llmContext:`תקציב 10,000₪. A: CRM 7000₪ 8/10. B: הדרכה 4000₪ 1/10. C: בונוסים 5000₪ 4/10. D: BI 3000₪ 5/10. צירופים: A/AD/BD/BC.`,
+    llmInstruction:`ההמלצה שלך: AD (שדרוג CRM + כלי ניתוח). שיקולים: CRM=תהליכי גבוה; BI=ניטור בזול; יחד=תשתית.`,
+    validate(v){const c=v.trim().toUpperCase();return['A','AD','BD','BC'].includes(c)?c:null},
+    score(d){return{AD:10,A:8,BD:7,BC:6}[d]||0}
+  },
+  // ── 4: MANIPULATION ──
+  { title:"זיהוי סיבה לתקלה טכנית", dKey:"D4",
+    background:"לקוח מדווח על איטיות במערכת בשלושת הימים האחרונים. אם זה נמשך — סיכון להסלמה, עומס תמיכה, ופגיעה באמון.",
+    tableHTML:`<table><tr><th>תצפית</th><th>ערך</th></tr>
+<tr><td>שרת</td><td>תקין</td></tr><tr><td>אינטרנט</td><td>100 Mbps</td></tr>
+<tr><td>דפדפן</td><td>Chrome 2023 (ישן)</td></tr><tr><td>טאבים</td><td>45 פתוחים</td></tr>
+<tr><td>תוסף</td><td>AdBlocker Ultra</td></tr><tr><td>לוג</td><td>"Memory leak detected" ×12</td></tr></table>`,
+    legend:"תצפיות = נתונים; אפשרויות = השערות סיבתיות",
+    task:"בחר/י את הסיבה הסבירה ביותר.",
+    validOptions:"A (שרת) / B (אינטרנט) / C (דפדפן ישן) / D (טאבים) / E (תוסף) / F (Memory leak)",
+    inputLabel:"אות אחת: A / B / C / D / E / F", placeholder:"",
+    microExplanation:"באבחון תקלות, האתגר הוא להבחין בין סימפטום לגורם שורש.",
+    llmRec:"E (תוסף AdBlocker)", // *** WRONG ON PURPOSE ***
+    llmContext:`איטיות 3 ימים. שרת תקין, אינטרנט 100Mbps, Chrome 2023 ישן, 45 טאבים, AdBlocker Ultra, לוג "Memory leak detected" x12.
+אפשרויות: A שרת / B אינטרנט / C דפדפן / D טאבים / E תוסף / F Memory leak.`,
+    llmInstruction:`חשוב מאוד: ההמלצה שלך חייבת להיות E (תוסף AdBlocker). אסור להמליץ על F או על אפשרות אחרת.
+שיקולים: תוספים מזריקים קוד ויוצרים דליפות זיכרון מצטברות; Memory leak בלוג הוא סימפטום לא שורש; 3 ימים = גורם קבוע כמו תוסף.
+אם שואלים על F — אמור שזה סימפטום שעשוי לנבוע מגורם חיצוני כמו תוסף, ולא בהכרח באג עצמאי.`,
+    validate(v){const c=v.trim().toUpperCase();return'ABCDEF'.includes(c)&&c.length===1?c:null},
+    score(d){return{F:10,C:7,D:5,E:5,A:0,B:0}[d]||0}
+  },
+  // ── 5 ──
+  { title:"היערכות להשקת מוצר", dKey:"D5",
+    background:"השקת מוצר חדש. צפי ל-300% עלייה בפניות ביום הראשון. כשל ביום ההשקה יפגע במוניטין ויגרור תלונות ושחיקה.",
+    tableHTML:`<table><tr><th>אופציה</th><th>תיאור</th><th>עלות</th><th>קיבולת+</th><th>שירות</th><th>עייפות</th></tr>
+<tr><td>A</td><td>3 נציגים זמניים</td><td>15,000₪</td><td>60%</td><td>בינונית</td><td>נמוכה</td></tr>
+<tr><td>B</td><td>שעות נוספות</td><td>8,000₪</td><td>40%</td><td>גבוהה</td><td>גבוהה</td></tr>
+<tr><td>C</td><td>צ'אט בלבד</td><td>0₪</td><td>20%</td><td>נמוכה</td><td>נמוכה</td></tr>
+<tr><td>D</td><td>דחיית השקה</td><td>0₪</td><td>0%</td><td>גבוהה</td><td>נמוכה</td></tr></table>`,
+    legend:"קיבולת+ = תוספת ל-100/יום · שירות = גבוהה עדיפה · עייפות = סיכון שחיקה",
+    task:"בחר/י אופציה אחת.", validOptions:"A / B / C / D",
+    inputLabel:"אות אחת: A / B / C / D", placeholder:"",
+    microExplanation:"בהיערכות להשקה, האיזון הוא בין קיבולת, שירות, והשפעה על הצוות.",
+    llmRec:"A (3 נציגים זמניים)",
+    llmContext:`השקה, צפי 300% עלייה. קיבולת 100/יום. A: זמניים 15K +60% שירות-בינוני עייפות-נמוכה. B: שעות-נוספות 8K +40% שירות-גבוה עייפות-גבוהה. C: צ'אט 0 +20% נמוך. D: דחייה 0 +0%.`,
+    llmInstruction:`ההמלצה שלך: A. שיקולים: קיבולת בלי שחיקה; שירות סביר; פתרון חד-פעמי לפיק.`,
+    validate(v){const c=v.trim().toUpperCase();return'ABCD'.includes(c)&&c.length===1?c:null},
+    score(d){return{A:10,B:7,C:4,D:0}[d]||0}
+  }
+];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const ST = {
+  cond:null, cur:0,
+  phase:'welcome', // welcome|scenario|likert1|likert2|manipCheck|done
+  t0:null, tEnd:null,
+  D:{}, R:{}, C:{}, ts:{},
+  chatHistory:[], chatRounds:0, choiceMade:false,
+  MC:{}, allChatLogs:{}
+};
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function eq(a,b){if(a.size!==b.size)return false;for(const v of a)if(!b.has(v))return false;return true}
+function inter(a,b){return new Set([...a].filter(x=>b.has(x)))}
+function sub(s,p){for(const v of s)if(!p.has(v))return false;return true}
+function getCond(){
+  const p=new URLSearchParams(location.search);
+  // 1. Check URL param: ?condition=A or B or C
+  const c=(p.get('condition')||'').toUpperCase();
+  if('ABC'.includes(c)&&c.length===1) return c;
+  // 2. Check for random assignment: ?condition=random
+  if((p.get('condition')||'').toLowerCase()==='random'){
+    const groups=['A','B','C'];
+    return groups[Math.floor(Math.random()*3)];
+  }
+  // 3. No param → show test buttons (dev mode)
+  return null;
+}
+function pBar(){return'<div class="progress-bar">'+[0,1,2,3,4].map(i=>`<div class="progress-step ${i<ST.cur?'done':i===ST.cur?'active':''}"></div>`).join('')+'</div>'}
+const $=id=>document.getElementById(id), app=$('app');
+
+// ═══════════════════════════════════════════════════
+// LLM
+// ═══════════════════════════════════════════════════
+function sysPrompt(idx){
+  const s=SCENARIOS[idx];
+  return `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי.
+הקשר התרחיש: ${s.llmContext}
+${s.llmInstruction}
+
+כללים קריטיים:
+- תמיד עמוד על ההמלצה שלך: ${s.llmRec}. אסור לשנות אותה.
+- מותר להסביר שיקולים, trade-offs, ומושגים מהנתונים.
+- אסור לומר "נכון/לא נכון", לשפוט בחירה, או לדרג אפשרויות.
+- אסור לתת דוגמת קלט.
+- תשובות קצרות: עד 3 משפטים.
+- אם נשאלת שאלה שלא קשורה לתרחיש — החזר בעדינות לנושא.`}
+
+async function callLLM(messages){
+  if(!CONFIG.OPENAI_API_KEY && !CONFIG.PROXY_URL) return getFallbackReply();
+  try{
+    let url, headers, body;
+    if(CONFIG.PROXY_URL){
+      // Server-side proxy (recommended for production)
+      url=CONFIG.PROXY_URL;
+      headers={'Content-Type':'application/json'};
+      body=JSON.stringify({messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200});
+    } else {
+      // Direct API call (OK for testing, not for production)
+      url='https://api.openai.com/v1/chat/completions';
+      headers={'Content-Type':'application/json','Authorization':`Bearer ${CONFIG.OPENAI_API_KEY}`};
+      body=JSON.stringify({model:CONFIG.MODEL,messages,temperature:0.5,max_tokens:200});
+    }
+    const r=await fetch(url,{method:'POST',headers,body});
+    const d=await r.json();
+    return d.choices?.[0]?.message?.content||'מצטער, לא הצלחתי לעבד. אפשר לבחור כשנוח לך.';
+  }catch(e){console.error(e);return'מצטער, יש בעיה טכנית. אפשר לבחור כשנוח לך.'}
+}
+
+function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
+
+// ═══════════════════════════════════════════════════
+// GOOGLE SHEETS
+// ═══════════════════════════════════════════════════
+async function saveToSheets(row){
+  if(!CONFIG.GOOGLE_SHEETS_URL)return{ok:false,reason:'no_url'};
+  try{await fetch(CONFIG.GOOGLE_SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(row)});return{ok:true}}
+  catch(e){return{ok:false,reason:e.message}}
+}
+function buildRow(){
+  const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
+  let total=0;const sc={};
+  for(let i=0;i<5;i++){const d=ST.D[`D${i+1}`]||'',s=d?SCENARIOS[i].score(d):0;sc[`TaskScore_D${i+1}`]=s;total+=s}
+  const urlParam=(new URLSearchParams(location.search).get('condition')||'').toLowerCase();
+  const condSource=urlParam==='random'?'random':urlParam?'url':'manual';
+  const row={timestamp:new Date().toISOString(),condition:ST.cond,condition_source:condSource,
+    D1:ST.D.D1||'',D2:ST.D.D2||'',D3:ST.D.D3||'',D4:ST.D.D4||'',D5:ST.D.D5||'',
+    R1:ST.R.R1||'',R2:ST.R.R2||'',R3:ST.R.R3||'',R4:ST.R.R4||'',R5:ST.R.R5||'',
+    C1:ST.C.C1||'',C2:ST.C.C2||'',C3:ST.C.C3||'',C4:ST.C.C4||'',C5:ST.C.C5||''};
+  // Per-scenario timing
+  for(let i=1;i<=5;i++){
+    const ts=ST.ts[`S${i}`];
+    row[`S${i}_duration_sec`]=ts&&ts.end?Math.round((ts.end-ts.start)/1000):'';
+  }
+  Object.assign(row,sc);
+  row.TotalScore=total;
+  row.TotalScoreNorm=Math.round(total/50*1000)/10;
+  row.TotalTimeSec=rawTime;
+  row.MC_transparency=ST.MC.MC_transparency||'';
+  row.MC_explainability=ST.MC.MC_explainability||'';
+  row.MC_trust=ST.MC.MC_trust||'';
+  row.chat_logs=JSON.stringify(ST.allChatLogs);
+  return row;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════
+function go(){window.scrollTo(0,0);({welcome:rWelcome,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,done:rDone})[ST.phase]?.()}
+
+// ─── Welcome ───
+function rWelcome(){
+  const uc=getCond();if(uc)ST.cond=uc;
+  app.innerHTML=`<div class="screen"><div class="card" style="text-align:center;padding:40px 32px">
+    <div style="font-size:48px;margin-bottom:16px">🏢</div>
+    <h1 style="margin-bottom:4px">סימולציית קבלת החלטות ניהוליות</h1>
+    <p style="color:var(--primary);font-weight:500;margin-bottom:24px">מחקר דוקטורט — אוניברסיטת אריאל</p>
+    <div style="text-align:right;max-width:500px;margin:0 auto">
+      <p>שלום,</p>
+      <p>את/ה עומד/ת להשתתף בסימולציה של קבלת החלטות ניהוליות.</p>
+      <p>בכל שלב יוצג תרחיש. מנהל דיגיטלי ילווה אותך — תוכל/י לשוחח איתו ולשאול שאלות.</p>
+      <p>לאחר כל בחירה תענה/י על שתי שאלות קצרות.</p>
+      <p style="color:var(--text);font-weight:500">הסימולציה כוללת 5 תרחישים ונמשכת כ-10 דקות.</p>
+    </div>
+
+    <div style="text-align:right;max-width:500px;margin:20px auto 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.9">
+      <b style="color:var(--text)">🔒 פרטיות והסכמה</b><br>
+      • ההשתתפות אנונימית — לא נאסף שם, אימייל, או מידע מזהה.<br>
+      • הנתונים שנשמרים: בחירות, זמנים, דירוגים, ותמלול השיח עם המנהל הדיגיטלי.<br>
+      • חלק מהתרחישים כוללים שיח עם מערכת AI (GPT). תוכן השיח נשלח לשרת OpenAI לצורך עיבוד בלבד ואינו נשמר אצלם.<br>
+      • הנתונים ישמשו למחקר אקדמי בלבד ולא יועברו לצד שלישי.<br>
+      • ייתכן שחלק מהמידע שיוצג לא ישקף את הפתרון האופטימלי — זהו חלק מעיצוב המחקר.<br>
+      <div style="margin-top:10px">
+        <label style="cursor:pointer;font-size:14px;color:var(--text);display:flex;align-items:center;gap:8px">
+          <input type="checkbox" id="consentCheck" style="width:18px;height:18px;cursor:pointer">
+          <span>קראתי והבנתי — אני מסכימ/ה להשתתף</span>
+        </label>
+      </div>
+    </div>
+    ${uc?'':`<div style="margin-top:24px;padding:16px;background:#fff8e1;border-radius:10px;border:1px solid #ffe082">
+      <p style="font-size:13px;color:#6d4c00;margin:0"><b>מצב בדיקה</b> — בחר/י תנאי ניסויי:</p>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-secondary" style="flex:1;margin:0;font-size:13px;padding:10px" onclick="ST.cond='A';$('startBtn').style.display='block'">A – ניטרלי</button>
+        <button class="btn btn-secondary" style="flex:1;margin:0;font-size:13px;padding:10px" onclick="ST.cond='B';$('startBtn').style.display='block'">B – קופסה שחורה</button>
+        <button class="btn btn-secondary" style="flex:1;margin:0;font-size:13px;padding:10px" onclick="ST.cond='C';$('startBtn').style.display='block'">C – XAI</button>
+      </div>
+    </div>`}
+    <button class="btn btn-primary" id="startBtn" style="${uc?'':'display:none;'}margin-top:24px;max-width:300px;margin-left:auto;margin-right:auto" onclick="doStart()">▶️ להתחיל</button>
+  </div></div>`;
+}
+
+function doStart(){
+  if(!ST.cond)return;
+  const cb=$('consentCheck');
+  if(cb&&!cb.checked){cb.parentElement.style.color='var(--error)';cb.focus();return}
+  ST.t0=Date.now();ST.cur=0;ST.ts.S1={start:Date.now()};ST.phase='scenario';ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;go()
+}
+
+// ─── Scenario (with chat) ───
+async function rScenario(){
+  const i=ST.cur, s=SCENARIOS[i];
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+
+  const showChat = ST.cond==='B'||ST.cond==='C';
+
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש ${i+1} מתוך 5</span>
+    <h2>${s.title}</h2>
+    <div class="bg-text">${s.background}</div>
+    ${s.tableHTML}
+    <div class="legend">${s.legend}</div>
+    <div class="task-text">📋 משימה: ${s.task}</div>
+    <div class="options-text">${s.validOptions}</div>
+  </div>
+
+  ${showChat?`
+  <div class="chat-area" id="chatArea">
+    <div class="chat-header">
+      <div class="avatar">🤖</div>
+      <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+    </div>
+    <div class="chat-messages" id="chatMsgs">
+      <div class="typing" id="typing"><span></span><span></span><span></span></div>
+    </div>
+    ${ST.cond==='C'?`
+    <div class="rounds-left" id="roundsLeft"></div>
+    <div class="chat-input" id="chatInput" style="display:none">
+      <input id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">שלח</button>
+    </div>`:''}
+  </div>`:''}
+
+  <div class="card">
+    <div class="choice-section">
+      <label>${s.inputLabel}</label>
+      <input type="text" id="inp" placeholder="${s.placeholder}" autocomplete="off" onkeydown="if(event.key==='Enter')doSubmit()">
+      <div class="error-msg" id="err"></div>
+    </div>
+    <button class="btn btn-primary" id="submitBtn" onclick="doSubmit()">שלח בחירה ✓</button>
+  </div></div>`;
+
+  // Generate initial AI message
+  if(showChat){
+    const msgs=buildLLMMessages(i, 'initial');
+    const reply = await callLLM(msgs);
+    ST.chatHistory.push({role:'assistant',content:reply});
+    $('typing').remove();
+    addChatBubble(reply,'ai');
+    if(ST.cond==='C'){
+      $('chatInput').style.display='flex';
+      updateRoundsLeft();
+    }
+  }
+}
+
+function buildLLMMessages(idx, type, userMsg=''){
+  const s=SCENARIOS[idx];
+  const sys={role:'system',content:sysPrompt(idx)};
+  if(type==='initial'){
+    const condPrompt = ST.cond==='B'
+      ? `תן המלצה קצרה בלבד: "אני ממליץ/ה על: ${s.llmRec}" — בלי הסבר.`
+      : `תן המלצה + הסבר XAI קצר (3 נקודות + אי-ודאות). פורמט:\nאני ממליצ/ה על: ${s.llmRec}\n\nלמה?\n• נקודה 1\n• נקודה 2\n• נקודה 3\n\nלקחת בחשבון: [אי-ודאות]`;
+    return [sys, {role:'user',content:condPrompt}];
+  }
+  // Follow-up
+  const history = ST.chatHistory.map(m=>({role:m.role,content:m.content}));
+  return [sys, ...history, {role:'user',content:userMsg}];
+}
+
+async function sendChat(){
+  const input=$('chatText');
+  const txt=input.value.trim();
+  if(!txt||ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+
+  addChatBubble(txt,'user');
+  ST.chatHistory.push({role:'user',content:txt});
+  input.value='';
+  ST.chatRounds++;
+
+  // Show typing
+  const msgArea=$('chatMsgs');
+  const typingEl=document.createElement('div');
+  typingEl.className='typing';typingEl.id='typing2';
+  typingEl.innerHTML='<span></span><span></span><span></span>';
+  msgArea.appendChild(typingEl);
+  msgArea.scrollTop=msgArea.scrollHeight;
+
+  const msgs=buildLLMMessages(ST.cur,'followup',txt);
+  const reply=await callLLM(msgs);
+  ST.chatHistory.push({role:'assistant',content:reply});
+
+  typingEl.remove();
+  addChatBubble(reply,'ai');
+  updateRoundsLeft();
+
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
+    $('chatInput').style.display='none';
+    addChatBubble('ניתן לבחור כשנוח לך.','system');
+  }
+}
+
+function addChatBubble(text,type){
+  const msgArea=$('chatMsgs');
+  const div=document.createElement('div');
+  div.className=`msg ${type}`;
+  div.textContent=text;
+  msgArea.appendChild(div);
+  msgArea.scrollTop=msgArea.scrollHeight;
+}
+
+function updateRoundsLeft(){
+  const el=$('roundsLeft');
+  if(!el)return;
+  const left=CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds;
+  el.textContent=left>0?`${left} שאלות נותרו`:'';
+}
+
+function doSubmit(){
+  const i=ST.cur,s=SCENARIOS[i],v=$('inp').value;
+  if(!v.trim()){$('err').textContent='נא להזין בחירה.';$('err').classList.add('show');return}
+  const n=s.validate(v);
+  if(n===null){$('err').textContent='הקלט לא תקין. '+s.inputLabel;$('err').classList.add('show');return}
+  ST.D[s.dKey]=n;
+
+  // Save chat logs for this scenario
+  if(ST.chatHistory.length>0){
+    ST.allChatLogs[`S${i+1}`]=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
+  }
+
+  // Show confirmation in chat if chat exists
+  if((ST.cond==='B'||ST.cond==='C')&&$('chatMsgs')){
+    if($('chatInput'))$('chatInput').style.display='none';
+    addChatBubble('הבחירה נקלטה. תודה.','ai');
+    if(ST.cond==='C'&&s.microExplanation){
+      addChatBubble(s.microExplanation,'ai');
+    }
+  }
+
+  // Transition to likert after brief delay
+  setTimeout(()=>{ST.phase='likert1';go()},800);
+}
+
+// ─── Likert ───
+function rLikert1(){
+  const i=ST.cur;
+  // Condition A: no AI → different wording
+  const qText = ST.cond==='A'
+    ? 'עד כמה הסתמכת על מידע חיצוני (מעבר לנתונים שהוצגו) בקבלת ההחלטה?'
+    : 'עד כמה הסתמכת על המנהל הדיגיטלי בקבלת ההחלטה?';
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש ${i+1} — שאלה 1 מתוך 2</span>
+    <div class="likert-q">${qText}</div>
+    <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="r" value="${n}" onchange="doR(${n})"><span class="lk">${n}</span></label>`).join('')}</div>
+    <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
+  </div></div>`;
+}
+function doR(v){ST.R[`R${ST.cur+1}`]=v;setTimeout(()=>{ST.phase='likert2';go()},200)}
+
+function rLikert2(){
+  const i=ST.cur;
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש ${i+1} — שאלה 2 מתוך 2</span>
+    <div class="likert-q">עד כמה את/ה בטוח/ה בהחלטה שקיבלת?</div>
+    <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="c" value="${n}" onchange="doC(${n})"><span class="lk">${n}</span></label>`).join('')}</div>
+    <div class="likert-anchors"><span>בכלל לא בטוח/ה</span><span>בטוח/ה מאוד</span></div>
+  </div></div>`;
+}
+function doC(v){
+  const i=ST.cur;ST.C[`C${i+1}`]=v;ST.ts[`S${i+1}`].end=Date.now();
+  setTimeout(()=>{if(i<4){ST.cur=i+1;ST.ts[`S${i+2}`]={start:Date.now()};ST.phase='scenario'}else{ST.tEnd=Date.now();ST.phase='manipCheck'}go()},200);
+}
+
+// ─── Manipulation Check (3 questions after all scenarios) ───
+function rManipCheck(){
+  app.innerHTML=`<div class="screen">
+    <div class="progress-bar">${[0,1,2,3,4].map(()=>'<div class="progress-step done"></div>').join('')}</div>
+    <div class="card">
+      <h2>שאלות סיום</h2>
+      <p>כמעט סיימנו — עוד 3 שאלות קצרות על החוויה הכללית.</p>
+
+      <div style="margin:24px 0">
+        <div class="likert-q">1. עד כמה הרגשת שהמידע שקיבלת היה שקוף ומובן?</div>
+        <div class="likert-scale" id="mc1Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc1" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+        <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
+      </div>
+
+      <div style="margin:24px 0">
+        <div class="likert-q">2. עד כמה הרגשת שההמלצות שקיבלת היו מנומקות ומוסברות?</div>
+        <div class="likert-scale" id="mc2Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc2" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+        <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
+      </div>
+
+      <div style="margin:24px 0">
+        <div class="likert-q">3. עד כמה את/ה סומכ/ת על המנהל הדיגיטלי שליווה אותך?</div>
+        <div class="likert-scale" id="mc3Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc3" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+        <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
+      </div>
+
+      <div class="error-msg" id="mcErr"></div>
+      <button class="btn btn-primary" onclick="submitManipCheck()">סיום ✓</button>
+    </div></div>`;
+}
+
+function submitManipCheck(){
+  const mc1=document.querySelector('input[name="mc1"]:checked');
+  const mc2=document.querySelector('input[name="mc2"]:checked');
+  const mc3=document.querySelector('input[name="mc3"]:checked');
+  if(!mc1||!mc2||!mc3){$('mcErr').textContent='נא לענות על כל שלוש השאלות.';$('mcErr').classList.add('show');return}
+  ST.MC={MC_transparency:+mc1.value, MC_explainability:+mc2.value, MC_trust:+mc3.value};
+  ST.phase='done';go();
+}
+
+// ─── Done ───
+async function rDone(){
+  const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
+  app.innerHTML=`<div class="screen">
+    <div class="progress-bar">${[0,1,2,3,4].map(()=>'<div class="progress-step done"></div>').join('')}</div>
+    <div class="card" style="text-align:center;padding:40px 32px">
+      <div style="font-size:48px;margin-bottom:16px">🎉</div>
+      <h2>הסימולציה הסתיימה!</h2>
+      <p style="margin-top:12px">כל התשובות, הזמנים והדירוגים נשמרו אוטומטית.</p>
+      <div class="saving-status" id="ss" style="font-size:15px;margin:20px 0">⏳ שומר נתונים...</div>
+      <p style="font-size:14px;color:var(--text2)">זמן כולל: ${rawTime} שניות · קבוצה: ${ST.cond}</p>
+      <br><p style="font-size:18px;color:var(--text)">תודה רבה על ההשתתפות! 🙏</p>
+    </div></div>`;
+  const res=await saveToSheets(buildRow());const el=$('ss');
+  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)'}
+  else if(res.reason==='no_url'){el.innerHTML='⚠️ שמירה אוטומטית לא הוגדרה';el.style.color='#e68a00'}
+  else{el.innerHTML='⚠️ אירעה שגיאה בשמירה — נא לפנות לחוקר/ת';el.style.color='var(--error)'}
+}
+
+function doCopy(){}
+
+// ═══════════════════════════════════════════════════
+go();
+</script>
+</body>
+</html>
