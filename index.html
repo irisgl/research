@@ -298,21 +298,21 @@ function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
 async function saveToSheets(row){
   if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
   try{
-    // Use hidden form + iframe to POST data (avoids CORS and URL length limits)
-    const iframe=document.createElement('iframe');
-    iframe.name='saveFrame';iframe.style.display='none';
-    document.body.appendChild(iframe);
-    const form=document.createElement('form');
-    form.method='POST';form.action=CONFIG.APPS_SCRIPT_URL;
-    form.target='saveFrame';form.style.display='none';
-    const input=document.createElement('input');
-    input.type='hidden';input.name='payload';input.value=JSON.stringify({data:row});
-    form.appendChild(input);
-    document.body.appendChild(form);
-    form.submit();
-    // Cleanup after delay
-    setTimeout(()=>{form.remove();iframe.remove()},5000);
-    return{ok:true};
+    // Remove chat_logs from URL call (too long), send core data only
+    const lite={...row};
+    delete lite.chat_logs; // chat_logs can be very long
+    
+    const payload=encodeURIComponent(JSON.stringify(lite));
+    const cbName='sv_'+Date.now();
+    return new Promise((resolve)=>{
+      const timeout=setTimeout(()=>{resolve({ok:true});cleanup()},12000);
+      window[cbName]=function(d){clearTimeout(timeout);resolve({ok:true});cleanup()};
+      function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+      const s=document.createElement('script');
+      s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&save=1&payload='+payload;
+      s.onerror=function(){clearTimeout(timeout);resolve({ok:false,reason:'network'});cleanup()};
+      document.body.appendChild(s);
+    });
   }catch(e){return{ok:false,reason:e.message}}
 }
 function buildRow(){
