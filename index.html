@@ -106,15 +106,9 @@
 // *** CONFIGURATION ***
 // ═══════════════════════════════════════════════════
 const CONFIG = {
-  OPENAI_API_KEY: '',         // ← API key from platform.openai.com
-  // ⚠️ SECURITY NOTE: In production, move API calls to a server-side proxy
-  // (e.g., Cloudflare Worker, Vercel Edge Function, or Apps Script)
-  // to avoid exposing the key in client-side code.
-  // See PROXY_URL option below as alternative to OPENAI_API_KEY.
-  PROXY_URL: '',              // ← Alternative: URL of your server-side proxy
-  GOOGLE_SHEETS_URL: '',      // ← Web App URL (see bottom of file)
-  MODEL: 'gpt-4o-mini',      // gpt-4o-mini (~$0.01/participant) or gpt-4o (~$0.05)
-  MAX_CHAT_ROUNDS: 3          // max follow-up questions per scenario
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwe7lF2jBBTLf1nI72bs6tl-sCTq7MoF4NTva_qsvmY_WrIsiyAGos2cqrdd4DD0rHieA/exec',        // ← URL אחד בלבד. ראי הוראות בתחתית הקובץ.
+  MODEL: 'gpt-4o-mini',      // gpt-4o-mini (~$0.01/participant) or gpt-4o
+  MAX_CHAT_ROUNDS: 5          // max follow-up questions per scenario
 };
 
 // ═══════════════════════════════════════════════════
@@ -276,24 +270,17 @@ ${s.llmInstruction}
 - אם נשאלת שאלה שלא קשורה לתרחיש — החזר בעדינות לנושא.`}
 
 async function callLLM(messages){
-  if(!CONFIG.OPENAI_API_KEY && !CONFIG.PROXY_URL) return getFallbackReply();
+  if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
   try{
-    let url, headers, body;
-    if(CONFIG.PROXY_URL){
-      // Server-side proxy (recommended for production)
-      url=CONFIG.PROXY_URL;
-      headers={'Content-Type':'application/json'};
-      body=JSON.stringify({messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200});
-    } else {
-      // Direct API call (OK for testing, not for production)
-      url='https://api.openai.com/v1/chat/completions';
-      headers={'Content-Type':'application/json','Authorization':`Bearer ${CONFIG.OPENAI_API_KEY}`};
-      body=JSON.stringify({model:CONFIG.MODEL,messages,temperature:0.5,max_tokens:200});
-    }
-    const r=await fetch(url,{method:'POST',headers,body});
-    const d=await r.json();
-    return d.choices?.[0]?.message?.content||'מצטער, לא הצלחתי לעבד. אפשר לבחור כשנוח לך.';
-  }catch(e){console.error(e);return'מצטער, יש בעיה טכנית. אפשר לבחור כשנוח לך.'}
+    const r=await fetch(CONFIG.APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'chat',messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200}),
+      redirect:'follow'
+    });
+    const text=await r.text();
+    try{const d=JSON.parse(text);return d.reply||getFallbackReply();}
+    catch(e){return text||getFallbackReply();}
+  }catch(e){console.error('LLM error:',e);return getFallbackReply()}
 }
 
 function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
@@ -302,8 +289,12 @@ function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
 // GOOGLE SHEETS
 // ═══════════════════════════════════════════════════
 async function saveToSheets(row){
-  if(!CONFIG.GOOGLE_SHEETS_URL)return{ok:false,reason:'no_url'};
-  try{await fetch(CONFIG.GOOGLE_SHEETS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(row)});return{ok:true}}
+  if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
+  try{await fetch(CONFIG.APPS_SCRIPT_URL,{
+    method:'POST',
+    body:JSON.stringify({action:'save',data:row}),
+    redirect:'follow'
+  });return{ok:true}}
   catch(e){return{ok:false,reason:e.message}}
 }
 function buildRow(){
