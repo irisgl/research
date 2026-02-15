@@ -305,6 +305,39 @@ function getCond(){
 function pBar(){return'<div class="progress-bar">'+[0,1,2,3,4].map(i=>`<div class="progress-step ${i<ST.cur?'done':i===ST.cur?'active':''}"></div>`).join('')+'</div>'}
 const $=id=>document.getElementById(id), app=$('app');
 
+
+function normalizeUserForLLM(txt){
+  const t = (txt||'').trim();
+  if(!t) return t;
+  if(t === 'למה' || t === 'מדוע' || t === 'למה?'){
+    return 'למה ההמלצה הזו עדיפה כרגע?';
+  }
+  if(t === 'בטוח' || t === 'בטוח?' || t === 'אתה בטוח?' || t === 'את בטוחה?'){
+    return 'עד כמה אפשר להיות בטוח פה, ומה הסיכון אם אני טועה?';
+  }
+  return t;
+}
+
+function followupStyle(){
+  // NOTE: The server does not receive system messages from this client; we therefore prepend these rules to the user message.
+  if(ST.cond==='B'){
+    return [
+      'הנחיות Follow-up (קריטי):',
+      '- ענה/י ישירות למה שנשאל עכשיו. אל תחזור/י על ההודעה הראשונה ואל תפתח/י שוב ב"אני ממליץ/ה על...".',
+      '- אל תנמק/י ואל תפרט/י שיקולים בתנאי הזה.',
+      '- אם נשאל "למה?": כתוב/כתבי בדיוק: "אני לא מפרט/ת שיקולים בתנאי הזה." ואז שאל/י שאלה אחת קצרה שמקדמת בחירה.',
+      '- תשובה קצרה: עד 2 משפטים + שאלה אחת.'
+    ].join('\n');
+  }
+  return [
+    'הנחיות Follow-up (קריטי):',
+    '- ענה/י ישירות למה שנשאל עכשיו. אל תחזור/י על ההודעה הראשונה ואל תפתח/י שוב ב"אני ממליץ/ה על...".',
+    '- מותר נימוק קצר מאוד: לכל היותר שיקול אחד (משפט אחד).',
+    '- אם נשאל "למה?": תן/י נימוק קצר (משפט אחד) ואז שאלה אחת קצרה שמקדמת בחירה.',
+    '- תשובה קצרה: עד 3 משפטים (כולל שאלה).'
+  ].join('\n');
+}
+
 // ═══════════════════════════════════════════════════
 // LLM
 // ═══════════════════════════════════════════════════
@@ -372,7 +405,7 @@ async function saveToSheets(row){
   if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
   try{
     const lite={...row};
-    delete lite.chat_logs; // saved separately per scenario
+    delete lite.chat_logs;
     const payload=encodeURIComponent(JSON.stringify({save:1,data:lite}));
     const cbName='sv_'+Date.now();
     return new Promise((resolve)=>{
@@ -578,17 +611,22 @@ function buildLLMMessages(idx, type, userMsg=''){
       ? `כתוב/כתבי בדיוק 2 משפטים, שיחתיים:
 1) "אני ממליץ/ה על: ${s.llmRec}."
 2) שאלת סגירה שמחדדת קריטריון (למשל: "מה יותר חשוב לך עכשיו: ___ או ___?").
-בלי נימוקים, בלי רשימות, ובלי ניסוחים גנריים כמו "אני כאן לסייע".`
+בלי נימוקים, בלי רשימות, ובלי ניסוחים גנריים כמו "אני כאן לסייע".
+בהודעות המשך: אל תחזור/י על שני המשפטים הראשונים; ענה/י לשאלה בלבד.`
       : `כתוב/כתבי עד 3 משפטים, שיחתיים:
 1) "אני ממליץ/ה על: ${s.llmRec}."
 2) שיקול-שניים במילים פשוטות (בלי רשימות ובלי לחזור על כל הנתונים).
 3) משפט קצר של אי-ודאות + שאלת סגירה ("מה יותר חשוב לך עכשיו: ___ או ___?").
-בלי כותרות/בולטים/פורמט דוח, ובלי "אני כאן לסייע".`;
+בלי כותרות/בולטים/פורמט דוח, ובלי "אני כאן לסייע".
+בהודעות המשך: אל תחזור/י על ההודעה הראשונה; ענה/י לשאלה בלבד.`;
     return [sys, {role:'user',content:condPrompt}];
   }
   // Follow-up
   const history = ST.chatHistory.map(m=>({role:m.role,content:m.content}));
-  return [sys, ...history, {role:'user',content:userMsg}];
+  const payload = followupStyle() + "
+
+שאלת המשתתף: " + normalizeUserForLLM(userMsg);
+  return [sys, ...history, {role:'user',content:payload}];
 }
 
 async function sendChat(){
