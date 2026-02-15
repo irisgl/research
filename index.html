@@ -623,9 +623,7 @@ function buildLLMMessages(idx, type, userMsg=''){
   }
   // Follow-up
   const history = ST.chatHistory.map(m=>({role:m.role,content:m.content}));
-  const payload = followupStyle() + "
-
-שאלת המשתתף: " + normalizeUserForLLM(userMsg);
+  const payload = followupStyle() + "\n\nשאלת המשתתף: " + normalizeUserForLLM(userMsg);
   return [sys, ...history, {role:'user',content:payload}];
 }
 
