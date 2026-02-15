@@ -34,11 +34,14 @@
   .bg-text{font-size:15px;color:var(--text);background:#f8f9fb;padding:16px 20px;border-radius:10px;border-right:4px solid var(--primary-light);margin-bottom:18px;line-height:1.9}
 
   /* Table */
-  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;border-radius:8px;overflow:hidden;border:1px solid var(--border)}
-  th{background:var(--primary-light);color:var(--primary-dark);font-weight:600;padding:12px 14px;text-align:right;border-bottom:2px solid var(--primary);font-size:13px}
-  td{padding:11px 14px;border-bottom:1px solid var(--border);text-align:right;font-size:14px}
-  tr:nth-child(even) td{background:#fafbfd}
-  tr:hover td{background:#f0f2f8}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px;border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+  th{background:#f7f9ff;color:var(--primary-dark);font-weight:600;padding:12px 14px;text-align:right;border-bottom:2px solid var(--primary);font-size:12px;letter-spacing:.02em}
+  td{padding:12px 14px;border-bottom:1px solid var(--border);text-align:right;font-size:14px;transition:background .15s ease}
+  .table-wrap{border-radius:14px;overflow:auto;-webkit-overflow-scrolling:touch}
+  .table-wrap thead th{position:sticky;top:0;z-index:2;background:#f7f9ff;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+  .table-wrap tbody tr:nth-child(odd) td{background:#fcfdff}
+  .table-wrap tbody tr:hover td{background:#f2f5ff}
+  .table-wrap td+td,.table-wrap th+th{border-left:1px solid #eef1f6}
   .legend{font-size:13px;color:var(--text2);background:#f8f9fb;padding:10px 14px;border-radius:8px;margin:12px 0}
   .task-text{font-size:16px;font-weight:600;color:var(--text);margin:16px 0 8px}
   .options-text{font-size:14px;color:var(--text2);font-style:italic}
@@ -149,7 +152,7 @@
     h1{font-size:20px}
     h2{font-size:17px}
     .bg-text{padding:12px 12px;font-size:14px}
-    .table-wrap table{min-width:auto}
+    .table-wrap table{min-width:640px}
     th,td{padding:8px 6px;font-size:12px}
     .chat-area{border-radius:10px}
     .chat-messages{padding:12px;max-height:320px;min-height:100px}
@@ -478,17 +481,18 @@ async function saveToSheets(row){
   }catch(e){return{ok:false,reason:e.message}}
 }
 
-// Save chat log for a single scenario (separate JSONP call)
-async function saveChatLog(scenarioIdx, chatHistory){
+// Save chat log incrementally (upsert by run_id + scenario)
+function saveChatLog(scenarioIdx, chatHistory){
   if(!CONFIG.APPS_SCRIPT_URL||!chatHistory||chatHistory.length===0)return;
   try{
     const logData={
-      save:1, sheet:'ChatLogs',
+      save:1, sheet:'ChatLogs', upsert:'run_id,scenario',
       data:{
         run_id:RUN_ID,
         scenario:scenarioIdx+1,
         condition:ST.cond,
         timestamp:new Date().toISOString(),
+        msg_count:chatHistory.filter(m=>m.r==='user').length,
         messages:chatHistory.map(m=>(m.r==='ai'?'מנהל: ':'משתתף: ')+m.t).join('\n')
       }
     };
@@ -780,6 +784,10 @@ async function sendChat(){
   typingEl.remove();
   addChatBubble(reply,'ai');
   updateRoundsLeft();
+
+  // Save chat incrementally after each AI reply
+  const logs=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
+  saveChatLog(ST.cur, logs);
 
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
     addChatBubble('הגעת למכסת השאלות. הזן/י את בחירתך.','system');
