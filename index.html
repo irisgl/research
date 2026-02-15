@@ -372,7 +372,7 @@ async function saveToSheets(row){
   if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
   try{
     const lite={...row};
-    delete lite.chat_logs;
+    delete lite.chat_logs; // saved separately per scenario
     const payload=encodeURIComponent(JSON.stringify({save:1,data:lite}));
     const cbName='sv_'+Date.now();
     return new Promise((resolve)=>{
@@ -385,6 +385,30 @@ async function saveToSheets(row){
       document.body.appendChild(s);
     });
   }catch(e){return{ok:false,reason:e.message}}
+}
+
+// Save chat log for a single scenario (separate JSONP call)
+async function saveChatLog(scenarioIdx, chatHistory){
+  if(!CONFIG.APPS_SCRIPT_URL||!chatHistory||chatHistory.length===0)return;
+  try{
+    const logData={
+      save:1, sheet:'ChatLogs',
+      data:{
+        run_id:RUN_ID,
+        scenario:scenarioIdx+1,
+        condition:ST.cond,
+        timestamp:new Date().toISOString(),
+        messages:chatHistory.map(m=>(m.r==='ai'?'מנהל: ':'משתתף: ')+m.t).join('\n')
+      }
+    };
+    const payload=encodeURIComponent(JSON.stringify(logData));
+    const cbName='cl_'+Date.now();
+    const s=document.createElement('script');
+    s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&save=1&payload='+payload;
+    window[cbName]=function(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)};
+    setTimeout(()=>{delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)},10000);
+    document.body.appendChild(s);
+  }catch(e){console.log('Chat log save error:',e)}
 }
 function buildRow(){
   const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
@@ -673,6 +697,10 @@ function rLikert2(){
 }
 function doC(v){
   const i=ST.cur;ST.C[`C${i+1}`]=v;ST.ts[`S${i+1}`].end=Date.now();
+  // Save chat log for this scenario
+  if(ST.allChatLogs[`S${i+1}`]&&ST.allChatLogs[`S${i+1}`].length>0){
+    saveChatLog(i, ST.allChatLogs[`S${i+1}`]);
+  }
   setTimeout(()=>{if(i<4){ST.cur=i+1;ST.ts[`S${i+2}`]={start:Date.now()};ST.phase='scenario'}else{ST.tEnd=Date.now();ST.phase='manipCheck'}go()},200);
 }
 
