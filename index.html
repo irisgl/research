@@ -165,25 +165,6 @@
     .legend{font-size:12px;padding:8px 10px}
     .pill{font-size:11px;padding:2px 8px}
     .progress-bar{margin-bottom:16px}
-
-    /* Table → Cards on mobile */
-    .table-wrap{overflow:visible}
-    .table-wrap table{width:100%;min-width:0;display:block}
-    .table-wrap thead{display:none}
-    .table-wrap tbody{display:block}
-    .table-wrap tr{
-      display:block;background:var(--card);border:1px solid var(--border);
-      border-radius:14px;box-shadow:var(--shadow);margin:10px 0;overflow:hidden;
-      border-right:4px solid var(--row-accent, transparent);
-    }
-    .table-wrap td{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      padding:10px 14px;border-bottom:1px solid #eef1f6;white-space:normal;
-    }
-    .table-wrap td:last-child{border-bottom:none}
-    .table-wrap td::before{
-      content:attr(data-label);font-weight:600;color:var(--text2);min-width:92px;flex:0 0 auto;
-    }
   }
 
   @media (max-width: 380px){
