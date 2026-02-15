@@ -165,6 +165,25 @@
     .legend{font-size:12px;padding:8px 10px}
     .pill{font-size:11px;padding:2px 8px}
     .progress-bar{margin-bottom:16px}
+
+    /* Table → Cards on mobile */
+    .table-wrap{overflow:visible}
+    .table-wrap table{width:100%;min-width:0;display:block}
+    .table-wrap thead{display:none}
+    .table-wrap tbody{display:block}
+    .table-wrap tr{
+      display:block;background:var(--card);border:1px solid var(--border);
+      border-radius:14px;box-shadow:var(--shadow);margin:10px 0;overflow:hidden;
+      border-right:4px solid var(--row-accent, transparent);
+    }
+    .table-wrap td{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;
+      padding:10px 14px;border-bottom:1px solid #eef1f6;white-space:normal;
+    }
+    .table-wrap td:last-child{border-bottom:none}
+    .table-wrap td::before{
+      content:attr(data-label);font-weight:600;color:var(--text2);min-width:92px;flex:0 0 auto;
+    }
   }
 
   @media (max-width: 380px){
@@ -636,6 +655,8 @@ async function rScenario(){
 
   </div></div>`;
 
+  enhanceMobileCards();
+
   // Condition A: show instruction in chat
   if(!hasAI){
     addChatBubble('📋 ' + s.inputLabel,'system');
@@ -779,6 +800,26 @@ async function sendChat(){
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
     addChatBubble('הגעת למכסת השאלות. הזן/י את בחירתך.','system');
   }
+}
+
+function enhanceMobileCards(){
+  document.querySelectorAll('.table-wrap table').forEach(table=>{
+    const headerRow=table.querySelector('tr');
+    if(!headerRow)return;
+    const headers=Array.from(headerRow.querySelectorAll('th')).map(th=>th.textContent.trim());
+    Array.from(table.querySelectorAll('tr')).slice(1).forEach(tr=>{
+      Array.from(tr.querySelectorAll('td')).forEach((td,idx)=>{
+        if(!td.hasAttribute('data-label'))td.setAttribute('data-label',headers[idx]||'');
+      });
+      const pill=tr.querySelector('.pill');
+      if(pill){
+        if(pill.classList.contains('u5'))tr.style.setProperty('--row-accent','var(--error)');
+        else if(pill.classList.contains('u4')||pill.classList.contains('u3'))tr.style.setProperty('--row-accent','#9c6f00');
+        else if(pill.classList.contains('u2'))tr.style.setProperty('--row-accent','#006644');
+        else if(pill.classList.contains('u1'))tr.style.setProperty('--row-accent','#495057');
+      }
+    });
+  });
 }
 
 function addChatBubble(text,type){
