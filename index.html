@@ -431,27 +431,30 @@ ${s.llmInstruction}
 
 async function callLLM(messages){
   if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
-  // Always use JSONP but send only scenario index + condition + user messages
-  // Server will build the full system prompt
-  try{
-    // Extract only user/assistant messages (not system prompt)
-    const chatMsgs=messages.filter(m=>m.role!=='system');
-    const compact={idx:ST.cur,cond:ST.cond,msgs:chatMsgs,model:CONFIG.MODEL};
-    const payload=encodeURIComponent(JSON.stringify(compact));
-    const cbName='cb_'+Date.now();
-    return new Promise((resolve)=>{
-      const timeout=setTimeout(()=>{resolve(getFallbackReply());cleanup()},20000);
-      window[cbName]=function(data){clearTimeout(timeout);resolve(data.reply||getFallbackReply());cleanup()};
-      function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
-      const script=document.createElement('script');
-      script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
-      script.onerror=function(){clearTimeout(timeout);resolve(getFallbackReply());cleanup()};
-      document.body.appendChild(script);
-    });
-  }catch(e){console.error('LLM error:',e);return getFallbackReply()}
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const chatMsgs=messages.filter(m=>m.role!=='system');
+      const compact={idx:ST.cur,cond:ST.cond,msgs:chatMsgs,model:CONFIG.MODEL};
+      const payload=encodeURIComponent(JSON.stringify(compact));
+      const cbName='cb_'+Date.now()+'_'+attempt;
+      const result=await new Promise((resolve)=>{
+        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        window[cbName]=function(data){clearTimeout(timeout);resolve(data.reply||null);cleanup()};
+        function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
+        const script=document.createElement('script');
+        script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+        script.onerror=function(){clearTimeout(timeout);resolve(null);cleanup()};
+        document.body.appendChild(script);
+      });
+      if(result)return result;
+      // First attempt failed — wait 2s and retry
+      if(attempt===0)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){console.error('LLM error:',e)}
+  }
+  return getFallbackReply();
 }
 
-function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
+function getFallbackReply(){return'מצטער/ת, לא הצלחתי להתחבר. נסה/י לשאול שוב או הזן/י את בחירתך.'}
 
 // ═══════════════════════════════════════════════════
 // GOOGLE SHEETS
