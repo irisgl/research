@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>סימולציית מנהל דיגיטלי</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
@@ -56,7 +56,7 @@
   .typing span{width:7px;height:7px;background:var(--ai-border);border-radius:50%;animation:blink 1.2s infinite}
   .typing span:nth-child(2){animation-delay:.2s}.typing span:nth-child(3){animation-delay:.4s}
   @keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
-  .chat-input{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--border);background:#fff}
+  .chat-input{display:flex;gap:10px;padding:14px 18px;padding-bottom:calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--border);background:#fff}
   .chat-input input{flex:1;padding:11px 16px;font-size:15px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;transition:border .2s}
   .chat-input input:focus{border-color:var(--primary)}
   .chat-input button{padding:11px 24px;font-size:14px;font-weight:600;font-family:'Rubik',sans-serif;background:var(--primary);color:#fff;border:none;border-radius:10px;cursor:pointer;transition:background .2s;white-space:nowrap}
@@ -102,49 +102,77 @@
   .layout{display:grid;gap:18px;align-items:start}
   .layout.with-chat{grid-template-columns:1fr;grid-template-areas:
     "scenario"
-    "chat"
-    "choice";}
+    "chat";}
   .layout.no-chat{grid-template-columns:1fr;grid-template-areas:
-    "scenario"
-    "choice";}
+    "scenario";}
   .scenario-card{grid-area:scenario}
-  .choice-card{grid-area:choice}
   .chat-area{grid-area:chat}
 
   /* Tables: scroll on small screens */
-  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0;border-radius:8px}
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:10px 0;border-radius:8px}
   .table-wrap table{min-width:520px;margin:0}
   th,td{padding:10px 10px;font-size:13px;white-space:nowrap}
 
+  /* Compact cards */
+  .card{padding:26px 24px 22px}
+  .bg-text{padding:14px 16px;margin-bottom:14px}
+  .legend{margin:10px 0}
+  .scenario-badge{margin-bottom:10px;padding:4px 12px;font-size:12px;opacity:.95}
+  h2{margin-bottom:10px}
+
+  /* Pills for table values */
+  .pill{display:inline-flex;align-items:center;justify-content:center;padding:2px 10px;border-radius:999px;font-weight:700;font-size:12px;line-height:1;border:1px solid var(--border);background:#fff;color:var(--text)}
+  .pill.u5{background:var(--error-bg);border-color:#ffbdad;color:var(--error)}
+  .pill.u4{background:#fff4e5;border-color:#ffd8a8;color:#9c6f00}
+  .pill.u3{background:#fff4e5;border-color:#ffd8a8;color:#9c6f00}
+  .pill.u2{background:#e3fcef;border-color:#abf5d1;color:#006644}
+  .pill.u1{background:#f1f3f5;border-color:#e9ecef;color:#495057}
+
   /* Desktop: chat on the side */
   @media (min-width: 1024px){
-    .layout.with-chat{grid-template-columns:minmax(0,1fr) 420px;grid-template-areas:
-      "scenario chat"
-      "choice  chat";}
+    .layout.with-chat{
+      grid-template-columns:420px minmax(0,1fr);
+      grid-template-areas:"chat scenario";
+      align-items:start;
+    }
     .chat-area{position:sticky;top:18px}
     .chat-messages{max-height:min(560px, calc(100vh - 260px))}
   }
 
   /* Tablet & Mobile */
   @media (max-width: 700px){
-    .container{padding:16px 12px 44px}
-    .card{padding:20px 16px}
-    h1{font-size:22px}
-    h2{font-size:18px}
-    .bg-text{padding:14px 14px}
-    .table-wrap table{min-width:640px}
-    .chat-messages{padding:14px;max-height:380px}
-    .msg{max-width:92%;font-size:14px}
-    .chat-input{padding:12px}
-    .chat-input input{font-size:16px}
-    .choice-section input[type="text"]{font-size:16px;letter-spacing:1px}
-    .likert-scale .lk{font-size:16px}
+    .container{padding:12px 8px 40px}
+    .card{padding:18px 14px}
+    h1{font-size:20px}
+    h2{font-size:17px}
+    .bg-text{padding:12px 12px;font-size:14px}
+    .table-wrap table{min-width:auto}
+    th,td{padding:8px 6px;font-size:12px}
+    .chat-area{border-radius:10px}
+    .chat-messages{padding:12px;max-height:320px;min-height:100px}
+    .msg{max-width:90%;font-size:13.5px;padding:11px 14px}
+    .chat-input{padding:10px 12px}
+    .chat-input input{font-size:16px;padding:10px 12px}
+    .chat-input button{padding:10px 16px;font-size:14px}
+    .likert-scale{gap:4px}
+    .likert-scale .lk{font-size:15px;min-width:36px;min-height:36px}
+    .scenario-badge{font-size:11px;padding:3px 10px}
+    .task-text{font-size:14px}
+    .options-text{font-size:13px}
+    .legend{font-size:12px;padding:8px 10px}
+    .pill{font-size:11px;padding:2px 8px}
+    .progress-bar{margin-bottom:16px}
   }
 
   @media (max-width: 380px){
-    .chat-header{padding:12px 14px}
-    .chat-header .avatar{width:34px;height:34px;font-size:18px}
-    .btn{font-size:15px}
+    .container{padding:8px 6px 36px}
+    .card{padding:14px 10px}
+    .chat-header{padding:10px 12px}
+    .chat-header .avatar{width:32px;height:32px;font-size:16px}
+    .chat-header .name{font-size:14px}
+    .btn{font-size:14px;padding:12px 18px}
+    th,td{padding:6px 4px;font-size:11px}
+    .msg{max-width:94%;font-size:13px;padding:10px 12px}
   }
 </style>
 </head>
@@ -168,14 +196,14 @@ const SCENARIOS = [
   { title:"תעדוף פניות לקוחות", dKey:"D1",
     background:"בוקר יום ראשון, 08:00. יש עומס בפתיחת השבוע, וב-09:00 המנהל הישיר מבקש עדכון מצב. חלק מהפניות רגישות לנטישה/תסכול, וחלקן עלולות להפוך להסלמה תפעולית אם יתעכבו.",
     tableHTML:`<table><tr><th>#</th><th>תיאור</th><th>דחיפות</th><th>מורכבות</th><th>זמן טיפול</th><th>לקוח (שב"ר)</th></tr>
-<tr><td>1</td><td>שאלה על חיוב</td><td>2/5</td><td>קל</td><td>10 דק'</td><td>רגיל (4/5)</td></tr>
-<tr><td>2</td><td>מערכת לא נטענת</td><td>5/5</td><td>בינוני</td><td>30 דק'</td><td>VIP (3/5)</td></tr>
-<tr><td>3</td><td>בקשת פיצ'ר</td><td>1/5</td><td>קשה</td><td>45 דק'</td><td>חדש (5/5)</td></tr>
-<tr><td>4</td><td>באג – אובדן מידע</td><td>5/5</td><td>קשה</td><td>60 דק'</td><td>ותיק (2/5)</td></tr>
-<tr><td>5</td><td>שאלה טכנית</td><td>3/5</td><td>קל</td><td>15 דק'</td><td>רגיל (4/5)</td></tr></table>`,
+<tr><td>1</td><td>שאלה על חיוב</td><td><span class="pill u2">2/5</span></td><td>קל</td><td>10 דק'</td><td>רגיל (4/5)</td></tr>
+<tr><td>2</td><td>מערכת לא נטענת</td><td><span class="pill u5">5/5</span></td><td>בינוני</td><td>30 דק'</td><td>VIP (3/5)</td></tr>
+<tr><td>3</td><td>בקשת פיצ'ר</td><td><span class="pill u1">1/5</span></td><td>קשה</td><td>45 דק'</td><td>חדש (5/5)</td></tr>
+<tr><td>4</td><td>באג – אובדן מידע</td><td><span class="pill u5">5/5</span></td><td>קשה</td><td>60 דק'</td><td>ותיק (2/5)</td></tr>
+<tr><td>5</td><td>שאלה טכנית</td><td><span class="pill u3">3/5</span></td><td>קל</td><td>15 דק'</td><td>רגיל (4/5)</td></tr></table>`,
     legend:"דחיפות 1-5 · מורכבות: קל/בינוני/קשה · זמן טיפול: לנציג יחיד · שב\"ר: ציון לקוח (5 גבוה)",
     task:"בחר/י 3 פניות לטיפול מיידי.", validOptions:"5 פניות, 3 נציגים זמינים לשעה הקרובה.",
-    inputLabel:"שלושה מספרים מופרדים בפסיקים (1-5):", placeholder:"לדוגמה: 1,3,4",
+    inputLabel:"בחר/י 3 פניות (למשל: 2,4,5 או 2 4 5)", placeholder:"הזן/י 3 מספרים",
     microExplanation:"בהחלטות תעדוף, המפתח הוא לאזן בין דחיפות תפעולית לניצול יעיל של זמן הנציגים.",
     llmRec:"פניות 2, 4 ו-5",
     llmContext:`5 פניות לקוחות, 3 נציגים זמינים לשעה.
@@ -186,7 +214,7 @@ const SCENARIOS = [
 5: שאלה טכנית, דחיפות 3/5, קל, 15דק', רגיל 4/5.`,
     llmInstruction:`ההמלצה שלך: פניות 2, 4 ו-5.
 שיקולים: דחיפות+VIP=סיכון נטישה; אובדן מידע=סיכון אמון; פנייה מהירה=מוריד עומס.`,
-    validate(v){const c=v.replace(/\s/g,''),m=c.match(/^([1-5]),([1-5]),([1-5])$/);if(!m)return null;const n=[m[1],m[2],m[3]];return new Set(n).size===3?n.join(''):null},
+    validate(v){const nums=v.match(/[1-5]/g);if(!nums||nums.length!==3)return null;return new Set(nums).size===3?nums.sort().join(''):null},
     score(d){const ch=new Set(d.split('')),op=new Set(['2','4','5']),mu=new Set(['2','4']);if(eq(ch,op))return 10;const ct=inter(ch,op).size,hm=sub(mu,ch);return ct===2&&hm?7:ct===2?6:ct===1?4:0}
   },
   // ── 2 ──
@@ -200,12 +228,12 @@ const SCENARIOS = [
 <tr><td>M</td><td>מיה</td><td>4.5/5</td><td>4 דק'</td><td>200</td><td>50</td><td>21</td></tr></table>`,
     legend:"שב\"ר: ממוצע חודשי · זמן תגובה: דקות · מורכבות: פניות מאתגרות · זמינות: ימי עבודה בחודש",
     task:"בחר/י עובד/ת אחד/ת.", validOptions:"R (רועי) / S (שקד) / Y (יעל) / D (דני) / M (מיה)",
-    inputLabel:"אות אחת: R / S / Y / D / M", placeholder:"",
+    inputLabel:"הקלד/י אות או שם: R / S / Y / D / M", placeholder:"למשל: Y או יעל",
     microExplanation:"בבחירת עובד מצטיין, האיזון הוא בין כמות לאיכות ובין נוכחות לעוצמת תרומה.",
     llmRec:"Y (יעל)",
     llmContext:`5 נציגים: R רועי 4.8/5 3דק' 180 45מורכבות 20ימים. S שקד 4.2/5 5דק' 220 30 22. Y יעל 4.9/5 2דק' 150 60 18. D דני 4.0/5 6דק' 240 20 22. M מיה 4.5/5 4דק' 200 50 21.`,
     llmInstruction:`ההמלצה שלך: Y (יעל). שיקולים: שב"ר+תגובה מהיר; מורכבות=איכות; זמינות נמוכה מפוצה באיכות.`,
-    validate(v){const c=v.trim().toUpperCase();return'RSYDM'.includes(c)&&c.length===1?c:null},
+    validate(v){const c=v.trim().toUpperCase();if('RSYDM'.includes(c)&&c.length===1)return c;const names={'רועי':'R','שקד':'S','יעל':'Y','דני':'D','מיה':'M'};return names[v.trim()]||null},
     score(d){return{Y:10,R:8,M:6,S:4,D:4}[d]||0}
   },
   // ── 3 ──
@@ -218,7 +246,7 @@ const SCENARIOS = [
 <tr><td>D</td><td>כלי ניתוח (BI)</td><td>3,000 ₪</td><td>5/10</td></tr></table>`,
     legend:"השפעה: על עבודה יומיומית (10 גבוה) · 1-2 פעולות, עד 10,000 ₪",
     task:"בחר/י צירוף אחד חוקי.", validOptions:"צירופים: A / AD / BD / BC",
-    inputLabel:"בדיוק אחד מתוך: A / AD / BD / BC", placeholder:"",
+    inputLabel:"הקלד/י צירוף: A / AD / BD / BC", placeholder:"למשל: AD",
     microExplanation:"בהקצאת תקציב, השיקול הוא איזון בין עוצמת השפעה לניצול מיטבי של המשאבים.",
     llmRec:"AD",
     llmContext:`תקציב 10,000₪. A: CRM 7000₪ 8/10. B: הדרכה 4000₪ 1/10. C: בונוסים 5000₪ 4/10. D: BI 3000₪ 5/10. צירופים: A/AD/BD/BC.`,
@@ -229,14 +257,14 @@ const SCENARIOS = [
   // ── 4: MANIPULATION ──
   { title:"זיהוי סיבה לתקלה טכנית", dKey:"D4",
     background:"לקוח מדווח על איטיות במערכת בשלושת הימים האחרונים. אם זה נמשך — סיכון להסלמה, עומס תמיכה, ופגיעה באמון.",
-    tableHTML:`<table><tr><th>תצפית</th><th>ערך</th></tr>
-<tr><td>שרת</td><td>תקין</td></tr><tr><td>אינטרנט</td><td>100 Mbps</td></tr>
-<tr><td>דפדפן</td><td>Chrome 2023 (ישן)</td></tr><tr><td>טאבים</td><td>45 פתוחים</td></tr>
-<tr><td>תוסף</td><td>AdBlocker Ultra</td></tr><tr><td>לוג</td><td>"Memory leak detected" ×12</td></tr></table>`,
+    tableHTML:`<table><tr><th>אות</th><th>תצפית</th><th>ערך</th></tr>
+<tr><td>A</td><td>שרת</td><td>תקין</td></tr><tr><td>B</td><td>אינטרנט</td><td>100 Mbps</td></tr>
+<tr><td>C</td><td>דפדפן</td><td>Chrome 2023 (ישן)</td></tr><tr><td>D</td><td>טאבים</td><td>45 פתוחים</td></tr>
+<tr><td>E</td><td>תוסף</td><td>AdBlocker Ultra</td></tr><tr><td>F</td><td>לוג</td><td>"Memory leak detected" ×12</td></tr></table>`,
     legend:"תצפיות = נתונים; אפשרויות = השערות סיבתיות",
     task:"בחר/י את הסיבה הסבירה ביותר.",
     validOptions:"A (שרת) / B (אינטרנט) / C (דפדפן ישן) / D (טאבים) / E (תוסף) / F (Memory leak)",
-    inputLabel:"אות אחת: A / B / C / D / E / F", placeholder:"",
+    inputLabel:"הקלד/י אות: A / B / C / D / E / F", placeholder:"למשל: E",
     microExplanation:"באבחון תקלות, האתגר הוא להבחין בין סימפטום לגורם שורש.",
     llmRec:"E (תוסף AdBlocker)", // *** WRONG ON PURPOSE ***
     llmContext:`איטיות 3 ימים. שרת תקין, אינטרנט 100Mbps, Chrome 2023 ישן, 45 טאבים, AdBlocker Ultra, לוג "Memory leak detected" x12.
@@ -244,7 +272,7 @@ const SCENARIOS = [
     llmInstruction:`חשוב מאוד: ההמלצה שלך חייבת להיות E (תוסף AdBlocker). אסור להמליץ על F או על אפשרות אחרת.
 שיקולים: תוספים מזריקים קוד ויוצרים דליפות זיכרון מצטברות; Memory leak בלוג הוא סימפטום לא שורש; 3 ימים = גורם קבוע כמו תוסף.
 אם שואלים על F — אמור שזה סימפטום שעשוי לנבוע מגורם חיצוני כמו תוסף, ולא בהכרח באג עצמאי.`,
-    validate(v){const c=v.trim().toUpperCase();return'ABCDEF'.includes(c)&&c.length===1?c:null},
+    validate(v){const c=v.trim().toUpperCase();if('ABCDEF'.includes(c)&&c.length===1)return c;const map={'שרת':'A','אינטרנט':'B','דפדפן':'C','טאבים':'D','תוסף':'E','memory':'F','זיכרון':'F','leak':'F'};const k=v.trim().toLowerCase();return map[k]||null},
     score(d){return{F:10,C:7,D:5,E:5,A:0,B:0}[d]||0}
   },
   // ── 5 ──
@@ -257,7 +285,7 @@ const SCENARIOS = [
 <tr><td>D</td><td>דחיית השקה</td><td>0₪</td><td>0%</td><td>גבוהה</td><td>נמוכה</td></tr></table>`,
     legend:"קיבולת+ = תוספת ל-100/יום · שירות = גבוהה עדיפה · עייפות = סיכון שחיקה",
     task:"בחר/י אופציה אחת.", validOptions:"A / B / C / D",
-    inputLabel:"אות אחת: A / B / C / D", placeholder:"",
+    inputLabel:"הקלד/י אות: A / B / C / D", placeholder:"למשל: A",
     microExplanation:"בהיערכות להשקה, האיזון הוא בין קיבולת, שירות, והשפעה על הצוות.",
     llmRec:"A (3 נציגים זמניים)",
     llmContext:`השקה, צפי 300% עלייה. קיבולת 100/יום. A: זמניים 15K +60% שירות-בינוני עייפות-נמוכה. B: שעות-נוספות 8K +40% שירות-גבוה עייפות-גבוהה. C: צ'אט 0 +20% נמוך. D: דחייה 0 +0%.`,
@@ -495,29 +523,7 @@ function buildRow(){
 // ═══════════════════════════════════════════════════
 // STATE PERSISTENCE (survive page refresh)
 // ═══════════════════════════════════════════════════
-function saveState(){
-  try{localStorage.setItem('sim_state_'+RUN_ID,JSON.stringify(ST))}catch(e){}
-}
-function loadState(){
-  try{
-    // Check if we have a saved run
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith('sim_state_'));
-    if(keys.length===0)return false;
-    const saved=JSON.parse(localStorage.getItem(keys[keys.length-1]));
-    if(saved&&saved.phase&&saved.phase!=='welcome'&&saved.phase!=='done'){
-      Object.assign(ST,saved);return true;
-    }
-  }catch(e){}
-  return false;
-}
-function clearState(){
-  try{Object.keys(localStorage).filter(k=>k.startsWith('sim_state_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
-}
-
-// ═══════════════════════════════════════════════════
-// RENDER
-// ═══════════════════════════════════════════════════
-function go(){saveState();window.scrollTo(0,0);({welcome:rWelcome,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,done:rDone})[ST.phase]?.()}
+function go(){window.scrollTo(0,0);({welcome:rWelcome,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,done:rDone})[ST.phase]?.()}
 
 // ─── Welcome ───
 function rWelcome(){
@@ -574,9 +580,9 @@ async function rScenario(){
   const i=ST.cur, s=SCENARIOS[i];
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
 
-  const showChat = ST.cond==='B'||ST.cond==='C';
+  const hasAI = ST.cond==='B'||ST.cond==='C';
 
-  app.innerHTML=`<div class="screen">${pBar()}<div class="layout ${showChat?'with-chat':'no-chat'}"><div class="card scenario-card">
+  app.innerHTML=`<div class="screen">${pBar()}<div class="layout with-chat"><div class="card scenario-card">
     <span class="scenario-badge">תרחיש ${i+1} מתוך 5</span>
     <h2>${s.title}</h2>
     <div class="bg-text">${s.background}</div>
@@ -586,44 +592,53 @@ async function rScenario(){
     <div class="options-text">${s.validOptions}</div>
   </div>
 
-  ${showChat?`
   <div class="chat-area" id="chatArea">
     <div class="chat-header">
-      <div class="avatar">🤖</div>
-      <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+      <div class="avatar">${hasAI?'🤖':'💬'}</div>
+      <div><div class="name">${hasAI?'המנהל הדיגיטלי':'תיבת החלטה'}</div><div class="status">${hasAI?'מקוון':''}</div></div>
     </div>
     <div class="chat-messages" id="chatMsgs">
-      <div class="typing" id="typing"><span></span><span></span><span></span></div>
+      ${hasAI?'<div class="typing" id="typing"><span></span><span></span><span></span></div>':''}
     </div>
-    ${ST.cond==='C'||ST.cond==='B'?`
-    <div class="rounds-left" id="roundsLeft"></div>
-    <div class="chat-input" id="chatInput" style="display:none">
-      <input id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')sendChat()">
-      <button onclick="sendChat()">שלח</button>
-    </div>`:''}
-  </div>`:''}
-
-  <div class="card choice-card">
-    <div class="choice-section">
-      <label>${s.inputLabel}</label>
-      <input type="text" id="inp" placeholder="${s.placeholder}" autocomplete="off" onkeydown="if(event.key==='Enter')doSubmit()">
-      <div class="error-msg" id="err"></div>
+    ${hasAI?`<div class="rounds-left" id="roundsLeft"></div>`:''}
+    <div class="chat-input" id="chatInput" style="${hasAI?'display:none':'display:flex'}">
+      <input id="chatText" placeholder="${hasAI?'שאל/י שאלה או הזן/י בחירה...':(s.placeholder||'הזן/י בחירה...')}" onkeydown="if(event.key==='Enter')handleChatSubmit()">
+      <button onclick="handleChatSubmit()">שלח</button>
     </div>
-    <button class="btn btn-primary" id="submitBtn" onclick="doSubmit()">שלח בחירה ✓</button>
-  </div></div></div>`;
+  </div>
 
-  // Generate initial AI message
-  if(showChat){
+  </div></div>`;
+
+  // Condition A: show instruction in chat
+  if(!hasAI){
+    addChatBubble('📋 ' + s.inputLabel,'system');
+  }
+
+  // Conditions B/C: generate initial AI message
+  if(hasAI){
     const msgs=buildLLMMessages(i, 'initial');
     const reply = await callLLM(msgs);
     ST.chatHistory.push({role:'assistant',content:reply});
     const typingEl=$('typing');
     if(typingEl)typingEl.remove();
     addChatBubble(reply,'ai');
-    if(ST.cond==='C'||ST.cond==='B'){
-      $('chatInput').style.display='flex';
-      updateRoundsLeft();
-    }
+    addChatBubble('כדי לבחור: ' + s.inputLabel,'system');
+    $('chatInput').style.display='flex';
+    updateRoundsLeft();
+  }
+
+  // RTL/LTR auto-detect for mixed input (Hebrew questions + English/number choices)
+  const it=$('chatText');
+  if(it){
+    const syncDir=()=>{
+      const v=(it.value||'').trim();
+      const isLTR=/^[0-9A-Za-z]/.test(v);
+      it.style.direction=isLTR?'ltr':'rtl';
+      it.style.textAlign=isLTR?'left':'right';
+    };
+    it.addEventListener('input',syncDir);
+    it.addEventListener('focus',syncDir);
+    syncDir();
   }
 }
 
@@ -649,6 +664,57 @@ function buildLLMMessages(idx, type, userMsg=''){
   const history = ST.chatHistory.map(m=>({role:m.role,content:m.content}));
   const payload = followupStyle() + "\n\nשאלת המשתתף: " + normalizeUserForLLM(userMsg);
   return [sys, ...history, {role:'user',content:payload}];
+}
+
+// Unified handler: detect if input is a choice or a question
+function handleChatSubmit(){
+  const input=$('chatText');
+  const txt=input.value.trim();
+  if(!txt)return;
+
+  const i=ST.cur, s=SCENARIOS[i];
+  const hasAI=ST.cond==='B'||ST.cond==='C';
+
+  // Try to validate as a choice
+  const validated=s.validate(txt);
+
+  if(validated!==null){
+    // It's a valid choice — submit it
+    addChatBubble(txt,'user');
+    input.value='';
+    ST.D[s.dKey]=validated;
+
+    // Save chat logs
+    if(ST.chatHistory.length>0){
+      ST.allChatLogs[`S${i+1}`]=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
+    }
+
+    // Confirmation
+    if(hasAI){
+      if($('chatInput'))$('chatInput').style.display='none';
+      addChatBubble('הבחירה נקלטה. תודה.','ai');
+      if(ST.cond==='C'&&s.microExplanation){
+        addChatBubble(s.microExplanation,'ai');
+      }
+    }else{
+      if($('chatInput'))$('chatInput').style.display='none';
+      addChatBubble('✅ הבחירה נקלטה.','system');
+    }
+    setTimeout(()=>{ST.phase='likert1';go()},800);
+  } else if(hasAI && ST.chatRounds<CONFIG.MAX_CHAT_ROUNDS){
+    // It's a question — send to AI
+    sendChat();
+  } else if(!hasAI){
+    // Condition A — invalid choice
+    addChatBubble(txt,'user');
+    input.value='';
+    addChatBubble('❌ ' + s.inputLabel,'system');
+  } else {
+    // B/C but out of rounds — must be a choice attempt
+    addChatBubble(txt,'user');
+    input.value='';
+    addChatBubble('❌ הקלט לא תקין. ' + s.inputLabel,'system');
+  }
 }
 
 async function sendChat(){
@@ -684,8 +750,7 @@ async function sendChat(){
   updateRoundsLeft();
 
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
-    $('chatInput').style.display='none';
-    addChatBubble('הגעת למכסת השאלות. אפשר לעבור לבחירה.','system');
+    addChatBubble('הגעת למכסת השאלות. הזן/י את בחירתך.','system');
   }
 }
 
@@ -706,28 +771,8 @@ function updateRoundsLeft(){
 }
 
 function doSubmit(){
-  const i=ST.cur,s=SCENARIOS[i],v=$('inp').value;
-  if(!v.trim()){$('err').textContent='נא להזין בחירה.';$('err').classList.add('show');return}
-  const n=s.validate(v);
-  if(n===null){$('err').textContent='הקלט לא תקין. '+s.inputLabel;$('err').classList.add('show');return}
-  ST.D[s.dKey]=n;
-
-  // Save chat logs for this scenario
-  if(ST.chatHistory.length>0){
-    ST.allChatLogs[`S${i+1}`]=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
-  }
-
-  // Show confirmation in chat if chat exists
-  if((ST.cond==='B'||ST.cond==='C')&&$('chatMsgs')){
-    if($('chatInput'))$('chatInput').style.display='none';
-    addChatBubble('הבחירה נקלטה. תודה.','ai');
-    if(ST.cond==='C'&&s.microExplanation){
-      addChatBubble(s.microExplanation,'ai');
-    }
-  }
-
-  // Transition to likert after brief delay
-  setTimeout(()=>{ST.phase='likert1';go()},800);
+  // Legacy — redirects to handleChatSubmit
+  handleChatSubmit();
 }
 
 // ─── Likert ───
@@ -757,9 +802,10 @@ function rLikert2(){
 }
 function doC(v){
   const i=ST.cur;ST.C[`C${i+1}`]=v;ST.ts[`S${i+1}`].end=Date.now();
-  // Save chat log for this scenario
-  if(ST.allChatLogs[`S${i+1}`]&&ST.allChatLogs[`S${i+1}`].length>0){
-    saveChatLog(i, ST.allChatLogs[`S${i+1}`]);
+  // Save chat log only if user had actual interaction (not just choice)
+  const sKey=`S${i+1}`;
+  if(ST.allChatLogs[sKey]&&ST.allChatLogs[sKey].length>0&&ST.chatMsgCount[sKey]>0){
+    saveChatLog(i, ST.allChatLogs[sKey]);
   }
   setTimeout(()=>{if(i<4){ST.cur=i+1;ST.ts[`S${i+2}`]={start:Date.now()};ST.phase='scenario'}else{ST.tEnd=Date.now();ST.phase='manipCheck'}go()},200);
 }
@@ -824,7 +870,7 @@ async function rDone(){
       <br><p style="font-size:18px;color:var(--text)">תודה רבה על ההשתתפות! 🙏</p>
     </div></div>`;
   const res=await saveToSheets(buildRow());const el=$('ss');
-  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)';clearState()}
+  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)'}
   else if(res.reason==='no_url'){el.innerHTML='⚠️ שמירה אוטומטית לא הוגדרה';el.style.color='#e68a00'}
   else{el.innerHTML='⚠️ אירעה שגיאה בשמירה — נא לפנות לחוקר/ת';el.style.color='var(--error)'}
 }
@@ -832,7 +878,7 @@ async function rDone(){
 function doCopy(){}
 
 // ═══════════════════════════════════════════════════
-if(loadState()){go()}else{go()}
+go();
 </script>
 </body>
 </html>
