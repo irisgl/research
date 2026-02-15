@@ -157,7 +157,7 @@
 const CONFIG = {
 APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwe7lF2jBBTLf1nI72bs6tl-sCTq7MoF4NTva_qsvmY_WrIsiyAGos2cqrdd4DD0rHieA/exec',
   MODEL: 'gpt-4o-mini',      // gpt-4o-mini (~$0.01/participant) or gpt-4o
-  MAX_CHAT_ROUNDS: 3          // max follow-up questions per scenario
+  MAX_CHAT_ROUNDS: 5          // max follow-up questions per scenario
 };
 
 // ═══════════════════════════════════════════════════
@@ -493,9 +493,31 @@ function buildRow(){
 }
 
 // ═══════════════════════════════════════════════════
+// STATE PERSISTENCE (survive page refresh)
+// ═══════════════════════════════════════════════════
+function saveState(){
+  try{localStorage.setItem('sim_state_'+RUN_ID,JSON.stringify(ST))}catch(e){}
+}
+function loadState(){
+  try{
+    // Check if we have a saved run
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith('sim_state_'));
+    if(keys.length===0)return false;
+    const saved=JSON.parse(localStorage.getItem(keys[keys.length-1]));
+    if(saved&&saved.phase&&saved.phase!=='welcome'&&saved.phase!=='done'){
+      Object.assign(ST,saved);return true;
+    }
+  }catch(e){}
+  return false;
+}
+function clearState(){
+  try{Object.keys(localStorage).filter(k=>k.startsWith('sim_state_')).forEach(k=>localStorage.removeItem(k))}catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════
-function go(){window.scrollTo(0,0);({welcome:rWelcome,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,done:rDone})[ST.phase]?.()}
+function go(){saveState();window.scrollTo(0,0);({welcome:rWelcome,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,done:rDone})[ST.phase]?.()}
 
 // ─── Welcome ───
 function rWelcome(){
@@ -510,6 +532,7 @@ function rWelcome(){
       <p>בכל שלב יוצג תרחיש. מנהל דיגיטלי ילווה אותך — תוכל/י לשוחח איתו ולשאול שאלות.</p>
       <p>לאחר כל בחירה תענה/י על שתי שאלות קצרות.</p>
       <p style="color:var(--text);font-weight:500">הסימולציה כוללת 5 תרחישים ונמשכת כ-10 דקות.</p>
+      <p style="color:var(--error);font-size:13px;background:var(--error-bg);padding:10px 14px;border-radius:8px;margin-top:8px">⚠️ שים/י לב: המנהל הדיגיטלי מבוסס על בינה מלאכותית ועשוי לטעות. ההמלצות שלו הן כלי עזר בלבד — ההחלטה הסופית תמיד שלך.</p>
     </div>
 
     <div style="text-align:right;max-width:500px;margin:20px auto 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border);font-size:13px;color:var(--text2);line-height:1.9">
@@ -801,7 +824,7 @@ async function rDone(){
       <br><p style="font-size:18px;color:var(--text)">תודה רבה על ההשתתפות! 🙏</p>
     </div></div>`;
   const res=await saveToSheets(buildRow());const el=$('ss');
-  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)'}
+  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)';clearState()}
   else if(res.reason==='no_url'){el.innerHTML='⚠️ שמירה אוטומטית לא הוגדרה';el.style.color='#e68a00'}
   else{el.innerHTML='⚠️ אירעה שגיאה בשמירה — נא לפנות לחוקר/ת';el.style.color='var(--error)'}
 }
@@ -809,7 +832,7 @@ async function rDone(){
 function doCopy(){}
 
 // ═══════════════════════════════════════════════════
-go();
+if(loadState()){go()}else{go()}
 </script>
 </body>
 </html>
