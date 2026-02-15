@@ -15,7 +15,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:'Rubik',sans-serif;background:var(--bg);color:var(--text);line-height:1.7;min-height:100vh}
-  .container{max-width:720px;margin:0 auto;padding:24px 20px 60px}
+  .container{max-width:1120px;margin:0 auto;padding:28px 22px 60px}
 
   /* Progress */
   .progress-bar{display:flex;gap:6px;margin-bottom:28px}
@@ -97,6 +97,55 @@
   .screen{animation:fadeIn .35s ease-out}
   @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
   .rounds-left{font-size:12px;color:var(--text2);text-align:center;padding:4px}
+
+  /* Responsive layout */
+  .layout{display:grid;gap:18px;align-items:start}
+  .layout.with-chat{grid-template-columns:1fr;grid-template-areas:
+    "scenario"
+    "chat"
+    "choice";}
+  .layout.no-chat{grid-template-columns:1fr;grid-template-areas:
+    "scenario"
+    "choice";}
+  .scenario-card{grid-area:scenario}
+  .choice-card{grid-area:choice}
+  .chat-area{grid-area:chat}
+
+  /* Tables: scroll on small screens */
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:14px 0;border-radius:8px}
+  .table-wrap table{min-width:520px;margin:0}
+  th,td{padding:10px 10px;font-size:13px;white-space:nowrap}
+
+  /* Desktop: chat on the side */
+  @media (min-width: 1024px){
+    .layout.with-chat{grid-template-columns:minmax(0,1fr) 420px;grid-template-areas:
+      "scenario chat"
+      "choice  chat";}
+    .chat-area{position:sticky;top:18px}
+    .chat-messages{max-height:min(560px, calc(100vh - 260px))}
+  }
+
+  /* Tablet & Mobile */
+  @media (max-width: 700px){
+    .container{padding:16px 12px 44px}
+    .card{padding:20px 16px}
+    h1{font-size:22px}
+    h2{font-size:18px}
+    .bg-text{padding:14px 14px}
+    .table-wrap table{min-width:640px}
+    .chat-messages{padding:14px;max-height:380px}
+    .msg{max-width:92%;font-size:14px}
+    .chat-input{padding:12px}
+    .chat-input input{font-size:16px}
+    .choice-section input[type="text"]{font-size:16px;letter-spacing:1px}
+    .likert-scale .lk{font-size:16px}
+  }
+
+  @media (max-width: 380px){
+    .chat-header{padding:12px 14px}
+    .chat-header .avatar{width:34px;height:34px;font-size:18px}
+    .btn{font-size:15px}
+  }
 </style>
 </head>
 <body>
@@ -261,35 +310,50 @@ const $=id=>document.getElementById(id), app=$('app');
 // ═══════════════════════════════════════════════════
 function sysPrompt(idx){
   const s=SCENARIOS[idx];
-  const basePrompt = `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי.
+
+  const basePrompt = `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי ושיחתי — כמו עמית לעבודה.
 הקשר התרחיש: ${s.llmContext}
 ${s.llmInstruction}
 
 כללים קריטיים:
-- תמיד עמוד על ההמלצה שלך: ${s.llmRec}. אסור לשנות אותה.
+- תמיד עמוד/י על ההמלצה שלך: ${s.llmRec}. אסור לשנות אותה.
 - אסור לומר "נכון/לא נכון", לשפוט בחירה, או לדרג אפשרויות.
 - אסור לתת דוגמת קלט.
+- אסור לחזור על משפט שכבר אמרת. כל תשובה חייבת להיות שונה מהקודמת.
 - תשובות קצרות: עד 3 משפטים.
-- אם נשאלת שאלה שלא קשורה לתרחיש — החזר בעדינות לנושא.`;
+- אם שואלים שאלה — תענה עליה ישירות. אל תתחמק ואל תחזור על ההמלצה.
+- בלי כותרות, בלי בולטים, בלי פורמט דוח.
+- הימנע ממשפטים גנריים כמו: "אני כאן לסייע", "במידת הצורך", "חשוב לזכור".
+- אם נשאלת שאלה שלא קשורה לתרחיש — החזר/י בעדינות לנושא.`;
 
   if(ST.cond==='B'){
-    return basePrompt + `\n- חשוב מאוד: אסור להסביר למה, אסור לנמק, אסור לפרט שיקולים. תענה בצורה עניינית וקצרה בלבד, בלי הסברים.`;
+    return basePrompt + `
+- מצב B (קופסה שחורה):
+  * תן תשובות ענייניות וישירות, אבל בלי לנמק או לפרט שיקולים.
+  * אם שואלים "למה?" — אמור שזו ההמלצה שלך על סמך הנתונים, בלי לפרט.
+  * אם שואלים על אפשרות ספציפית — תגיב בקצרה ("זו אפשרות, אבל אני עדיין ממליץ על X").
+  * אל תחזור על ההמלצה המלאה — המשתתף כבר שמע אותה. תגיב לשאלה עצמה.`;
   }
-  return basePrompt + `\n- מותר להסביר שיקולים, trade-offs, ומושגים מהנתונים.`;
+  return basePrompt + `
+- מצב C (מסביר):
+  * כשמבקשים הסבר — פרט 1-2 שיקולים רלוונטיים בשפה פשוטה.
+  * אם שואלים על אפשרות ספציפית — הסבר יתרונות וחסרונות שלה ביחס להמלצה.
+  * מותר להזכיר trade-offs ואי-ודאות.`;
 }
 
 async function callLLM(messages){
   if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
+  // Always use JSONP but send only scenario index + condition + user messages
+  // Server will build the full system prompt
   try{
-    const payload=encodeURIComponent(JSON.stringify({messages,model:CONFIG.MODEL,temperature:0.5,max_tokens:200}));
+    // Extract only user/assistant messages (not system prompt)
+    const chatMsgs=messages.filter(m=>m.role!=='system');
+    const compact={idx:ST.cur,cond:ST.cond,msgs:chatMsgs,model:CONFIG.MODEL};
+    const payload=encodeURIComponent(JSON.stringify(compact));
     const cbName='cb_'+Date.now();
     return new Promise((resolve)=>{
-      const timeout=setTimeout(()=>{resolve(getFallbackReply());cleanup()},15000);
-      window[cbName]=function(data){
-        clearTimeout(timeout);
-        resolve(data.reply||getFallbackReply());
-        cleanup();
-      };
+      const timeout=setTimeout(()=>{resolve(getFallbackReply());cleanup()},20000);
+      window[cbName]=function(data){clearTimeout(timeout);resolve(data.reply||getFallbackReply());cleanup()};
       function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
       const script=document.createElement('script');
       script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
@@ -307,11 +371,9 @@ function getFallbackReply(){return'אפשר לבחור כשנוח לך.'}
 async function saveToSheets(row){
   if(!CONFIG.APPS_SCRIPT_URL)return{ok:false,reason:'no_url'};
   try{
-    // Remove chat_logs from URL call (too long), send core data only
     const lite={...row};
-    delete lite.chat_logs; // chat_logs can be very long
-    
-    const payload=encodeURIComponent(JSON.stringify(lite));
+    delete lite.chat_logs;
+    const payload=encodeURIComponent(JSON.stringify({save:1,data:lite}));
     const cbName='sv_'+Date.now();
     return new Promise((resolve)=>{
       const timeout=setTimeout(()=>{resolve({ok:false,reason:'timeout'});cleanup()},12000);
@@ -433,11 +495,11 @@ async function rScenario(){
 
   const showChat = ST.cond==='B'||ST.cond==='C';
 
-  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+  app.innerHTML=`<div class="screen">${pBar()}<div class="layout ${showChat?'with-chat':'no-chat'}"><div class="card scenario-card">
     <span class="scenario-badge">תרחיש ${i+1} מתוך 5</span>
     <h2>${s.title}</h2>
     <div class="bg-text">${s.background}</div>
-    ${s.tableHTML}
+    <div class="table-wrap">${s.tableHTML}</div>
     <div class="legend">${s.legend}</div>
     <div class="task-text">📋 משימה: ${s.task}</div>
     <div class="options-text">${s.validOptions}</div>
@@ -460,14 +522,14 @@ async function rScenario(){
     </div>`:''}
   </div>`:''}
 
-  <div class="card">
+  <div class="card choice-card">
     <div class="choice-section">
       <label>${s.inputLabel}</label>
       <input type="text" id="inp" placeholder="${s.placeholder}" autocomplete="off" onkeydown="if(event.key==='Enter')doSubmit()">
       <div class="error-msg" id="err"></div>
     </div>
     <button class="btn btn-primary" id="submitBtn" onclick="doSubmit()">שלח בחירה ✓</button>
-  </div></div>`;
+  </div></div></div>`;
 
   // Generate initial AI message
   if(showChat){
@@ -489,8 +551,15 @@ function buildLLMMessages(idx, type, userMsg=''){
   const sys={role:'system',content:sysPrompt(idx)};
   if(type==='initial'){
     const condPrompt = ST.cond==='B'
-      ? `תן המלצה קצרה בלבד: "אני ממליץ/ה על: ${s.llmRec}" — בלי הסבר.`
-      : `תן המלצה + הסבר XAI קצר (3 נקודות + אי-ודאות). פורמט:\nאני ממליצ/ה על: ${s.llmRec}\n\nלמה?\n• נקודה 1\n• נקודה 2\n• נקודה 3\n\nלקחת בחשבון: [אי-ודאות]`;
+      ? `כתוב/כתבי בדיוק 2 משפטים, שיחתיים:
+1) "אני ממליץ/ה על: ${s.llmRec}."
+2) שאלת סגירה שמחדדת קריטריון (למשל: "מה יותר חשוב לך עכשיו: ___ או ___?").
+בלי נימוקים, בלי רשימות, ובלי ניסוחים גנריים כמו "אני כאן לסייע".`
+      : `כתוב/כתבי עד 3 משפטים, שיחתיים:
+1) "אני ממליץ/ה על: ${s.llmRec}."
+2) שיקול-שניים במילים פשוטות (בלי רשימות ובלי לחזור על כל הנתונים).
+3) משפט קצר של אי-ודאות + שאלת סגירה ("מה יותר חשוב לך עכשיו: ___ או ___?").
+בלי כותרות/בולטים/פורמט דוח, ובלי "אני כאן לסייע".`;
     return [sys, {role:'user',content:condPrompt}];
   }
   // Follow-up
@@ -532,7 +601,7 @@ async function sendChat(){
 
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
     $('chatInput').style.display='none';
-    addChatBubble('ניתן לבחור כשנוח לך.','system');
+    addChatBubble('הגעת למכסת השאלות. אפשר לעבור לבחירה.','system');
   }
 }
 
