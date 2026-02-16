@@ -396,7 +396,7 @@ function followupStyle(){
     return [
       'הנחיות Follow-up (קריטי):',
       '- ענה/י ישירות למה שנשאל. עד 2 משפטים.',
-      '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון". ***',
+      '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה". ***',
       '- אם שואלים "למה?" — אמור שאתה רואה דפוס בנתונים, ושאל שאלה שעוזרת להחליט.',
       '- אם המשתתף אומר משהו — שאל שאלה נוספת שמקדמת את ההחלטה. אל תאשר ואל תשלול.',
       taskReminder
@@ -405,7 +405,7 @@ function followupStyle(){
   return [
     'הנחיות Follow-up (קריטי):',
     '- ענה/י ישירות למה שנשאל. עד 2 משפטים.',
-    '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון". ***',
+    '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה". ***',
     '- מותר להסביר שיקול אחד (משפט אחד) ואז שאלה שמקדמת בחירה.',
     '- אם המשתתף אומר משהו — הסבר trade-off ושאל שאלה. אל תאשר ואל תשלול.',
     taskReminder
@@ -431,7 +431,7 @@ ${s.llmInstruction}
 - תפקידך: הדגש נתונים מהטבלה ושאל שאלה אחת שעוזרת להחליט.
 - כיוון פנימי שלך: ${s.llmRec}. מכוון בעדינות, לא אומר ישירות.
 - כל תשובה חייבת לקדם את ההחלטה. אסור לדבר על "יישום", "תוכנית", "כלים", או מה עושים אחרי הבחירה.
-- אסור לאשר בחירה ("מעולה", "בדיוק", "נכון") — תמיד תגיב בשאלה שמקדמת.
+- אסור לאשר בחירה ("מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה") — תמיד תגיב בשאלה שמקדמת.
 - תשובות קצרות: עד 2 משפטים בלבד.
 - בלי כותרות, בולטים, רשימות, ניסוחים גנריים.`;
 
@@ -455,7 +455,7 @@ ${s.llmInstruction}
 
 async function callLLM(messages){
   if(!CONFIG.APPS_SCRIPT_URL) return getFallbackReply();
-  for(let attempt=0;attempt<2;attempt++){
+  for(let attempt=0;attempt<3;attempt++){
     try{
       const chatMsgs=messages.filter(m=>m.role!=='system');
       const compact={idx:ST.cur,cond:ST.cond,msgs:chatMsgs,model:CONFIG.MODEL};
@@ -463,7 +463,12 @@ async function callLLM(messages){
       const cbName='cb_'+Date.now()+'_'+attempt;
       const result=await new Promise((resolve)=>{
         const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
-        window[cbName]=function(data){clearTimeout(timeout);resolve(data.reply||null);cleanup()};
+        window[cbName]=function(data){
+          clearTimeout(timeout);
+          if(data.error)console.warn('LLM error attempt '+attempt+':',data.error);
+          resolve(data.reply||null);
+          cleanup();
+        };
         function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
         const script=document.createElement('script');
         script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
@@ -472,7 +477,7 @@ async function callLLM(messages){
       });
       if(result)return result;
       // First attempt failed — wait 2s and retry
-      if(attempt===0)await new Promise(r=>setTimeout(r,2000));
+      if(attempt<2)await new Promise(r=>setTimeout(r,2000));
     }catch(e){console.error('LLM error:',e)}
   }
   return getFallbackReply();
@@ -757,6 +762,15 @@ function handleChatSubmit(){
     }
     setTimeout(()=>{ST.phase='likert1';go()},800);
   } else if(hasAI && ST.chatRounds<CONFIG.MAX_CHAT_ROUNDS){
+    // Check for filler/acknowledgment words — respond locally without LLM call
+    const filler=/^(טוב|אוקי|אוקיי|ok|okay|הבנתי|ברור|כן|סבבה|תודה|יופי|נו)\.?$/i;
+    if(filler.test(txt.trim())){
+      addChatBubble(txt,'user');
+      input.value='';
+      const s2=SCENARIOS[ST.cur];
+      addChatBubble(`אז מה ההחלטה שלך? ${s2.inputLabel}`,'ai');
+      return;
+    }
     // It's a question — send to AI
     sendChat();
   } else if(!hasAI){
@@ -804,9 +818,9 @@ async function sendChat(){
   addChatBubble(reply,'ai');
   updateRoundsLeft();
 
-  // Save chat incrementally after each AI reply
+  // Save chat incrementally after each AI reply (delayed to avoid overlap)
   const logs=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
-  saveChatLog(ST.cur, logs);
+  setTimeout(()=>saveChatLog(ST.cur, logs), 3000);
 
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS){
     addChatBubble('הגעת למכסת השאלות. הזן/י את בחירתך.','system');
