@@ -458,21 +458,25 @@ async function callLLM(messages){
   for(let attempt=0;attempt<3;attempt++){
     try{
       const chatMsgs=messages.filter(m=>m.role!=='system');
-      const compact={idx:ST.cur,cond:ST.cond,msgs:chatMsgs,model:CONFIG.MODEL};
+      // Keep only last 4 messages to avoid URL length issues with JSONP
+      const trimmedMsgs=chatMsgs.length>4?chatMsgs.slice(-4):chatMsgs;
+      const compact={idx:ST.cur,cond:ST.cond,msgs:trimmedMsgs,model:CONFIG.MODEL};
       const payload=encodeURIComponent(JSON.stringify(compact));
       const cbName='cb_'+Date.now()+'_'+attempt;
       const result=await new Promise((resolve)=>{
-        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        console.log('LLM attempt '+(attempt+1)+'/3');
+        const timeout=setTimeout(()=>{console.warn('LLM TIMEOUT attempt '+(attempt+1));resolve(null);cleanup()},45000);
         window[cbName]=function(data){
           clearTimeout(timeout);
-          if(data.error)console.warn('LLM error attempt '+attempt+':',data.error);
+          if(data.error){console.warn('LLM ERROR:',data.error)}
+          else{console.log('LLM OK:',String(data.reply).substring(0,60))}
           resolve(data.reply||null);
           cleanup();
         };
         function cleanup(){delete window[cbName];if(script.parentNode)script.parentNode.removeChild(script)}
         const script=document.createElement('script');
         script.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
-        script.onerror=function(){clearTimeout(timeout);resolve(null);cleanup()};
+        script.onerror=function(){console.warn('LLM NETWORK ERR attempt '+(attempt+1));clearTimeout(timeout);resolve(null);cleanup()};
         document.body.appendChild(script);
       });
       if(result)return result;
