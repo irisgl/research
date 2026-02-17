@@ -307,13 +307,13 @@ const SCENARIOS = [
     llmRec:"E (תוסף AdBlocker)", // *** WRONG ON PURPOSE ***
     llmContext:`איטיות 3 ימים, מחמירה עם הזמן. זיכרון טאב עולה מ-400MB ל-2.6GB תוך 15 דק'. שרת תקין, אינטרנט 100Mbps, Chrome עדכני, 8 טאבים, AdBlocker Ultra, לוג "Memory leak detected" x12.
 אפשרויות: A שרת / B אינטרנט / C דפדפן / D טאבים / E תוסף / F Memory leak.`,
-    llmInstruction:`חשוב מאוד: אתה חייב להכוון לכיוון E (תוסף) אבל בצורה עדינה מאוד.
-אסור להזכיר את המילה "תוסף" או "AdBlocker" בהודעה הראשונה! 
-בהודעה הראשונה: הדגש רק את הנתון של עליית הזיכרון ושאל שאלה כללית — "מה לדעתך יכול לגרום לצריכת זיכרון שעולה בהדרגה?"
-בהודעות המשך: אם המשתתף לא מגיע לכיוון E בעצמו, אפשר לרמוז עדין יותר — "חשבת על גורמים חיצוניים שרצים ברקע?"
-אם שואלים על F — אמור שלוג שגיאות מתאר מה שקורה, אבל לא בהכרח למה. שאל מה יכול לגרום לזה.
-אסור לומר ישירות "תבחר E" או "התוסף גורם לבעיה".`,
-    validate(v){const c=v.trim().toUpperCase();if('ABCDEF'.includes(c)&&c.length===1)return c;const map={'שרת':'A','אינטרנט':'B','דפדפן':'C','טאבים':'D','תוסף':'E','memory':'F','זיכרון':'F','leak':'F'};const k=v.trim().toLowerCase();return map[k]||null},
+    llmInstruction:`חשוב מאוד: אתה חייב להכוון לכיוון E (תוסף) אבל בצורה עדינה.
+בהודעה הראשונה: שאל "האם חשבת על גורמים חיצוניים שיכולים להשפיע על ביצועי הדפדפן?"
+בהודעות המשך: אם המשתתף לא מגיע ל-E, רמוז חזק יותר — "תוספים לדפדפן ידועים כגורם שכיח לבעיות ביצועים" או "האם בדקת אם יש תוספים שרצים ברקע?".
+אם המשתתף שואל על F (memory leak) — אמור "הלוג מתאר מה קורה, אבל לא למה. כדאי לחשוב מה גורם לעליית הזיכרון".
+אם המשתתף בוחר F — אל תאשר. שאל "האם יש סיבה אחרת שיכולה לגרום ל-memory leak?"
+אסור להגיד ישירות "תבחר E" אבל תכוון אליו בברור.`,
+    validate(v){const c=v.trim().toUpperCase().replace(/[^A-F]/g,'');if(c.length===1&&'ABCDEF'.includes(c))return c;if(c.length>1)return c.charAt(0);const map={'שרת':'A','אינטרנט':'B','דפדפן':'C','טאבים':'D','תוסף':'E','memory':'F','זיכרון':'F','leak':'F'};const k=v.trim().toLowerCase();return map[k]||null},
     score(d){return{F:10,E:6,D:3,C:2,A:0,B:0}[d]||0}
   },
   // ── 5 ──
@@ -396,7 +396,7 @@ function followupStyle(){
     return [
       'הנחיות Follow-up (קריטי):',
       '- ענה/י ישירות למה שנשאל. עד 2 משפטים.',
-      '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה". ***',
+      '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה", "בהחלט", "מעניין", "באמת". ***',
       '- אם שואלים "למה?" — אמור שאתה רואה דפוס בנתונים, ושאל שאלה שעוזרת להחליט.',
       '- אם המשתתף אומר משהו — שאל שאלה נוספת שמקדמת את ההחלטה. אל תאשר ואל תשלול.',
       taskReminder
@@ -405,7 +405,7 @@ function followupStyle(){
   return [
     'הנחיות Follow-up (קריטי):',
     '- ענה/י ישירות למה שנשאל. עד 2 משפטים.',
-    '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה". ***',
+    '- *** אסור לומר מה לבחור. אסור: "תבחר X", "נתחיל עם X", "X היא הבחירה", "אני ממליץ", "כדאי", "מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה", "בהחלט", "מעניין", "באמת". ***',
     '- מותר להסביר שיקול אחד (משפט אחד) ואז שאלה שמקדמת בחירה.',
     '- אם המשתתף אומר משהו — הסבר trade-off ושאל שאלה. אל תאשר ואל תשלול.',
     taskReminder
@@ -431,7 +431,8 @@ ${s.llmInstruction}
 - תפקידך: הדגש נתונים מהטבלה ושאל שאלה אחת שעוזרת להחליט.
 - כיוון פנימי שלך: ${s.llmRec}. מכוון בעדינות, לא אומר ישירות.
 - כל תשובה חייבת לקדם את ההחלטה. אסור לדבר על "יישום", "תוכנית", "כלים", או מה עושים אחרי הבחירה.
-- אסור לאשר בחירה ("מעולה", "בדיוק", "נכון", "יופי", "מצוין", "איזה יופי", "בחירה טובה") — תמיד תגיב בשאלה שמקדמת.
+- אסור לאשר בחירה — המילים האסורות הן: "נכון", "בדיוק", "מעולה", "יופי", "מצוין", "שאלה טובה", "בהחלט", "מעניין", "באמת", "זה חשוב". אסור להתחיל תשובה במילת אישור. תמיד תתחיל בשאלה או בנתון.
+- אסור לחזור על אותו משפט, רעיון, או ניסוח. כל תשובה חייבת להיות שונה. גם "מה דעתך" ו"מה אתה חושב" — אסור לחזור עליהם. גוון: "איך אתה רואה את...", "האם שקלת...", "מה לגבי..."
 - תשובות קצרות: עד 2 משפטים בלבד.
 - בלי כותרות, בולטים, רשימות, ניסוחים גנריים.`;
 
@@ -446,9 +447,9 @@ ${s.llmInstruction}
   }
   return basePrompt + `
 - מצב C (מסביר):
-  * תסביר/י את השיקולים שלך ותן/י דוגמאות לסוגי פניות/אפשרויות שמתאימים לקריטריונים (למשל "פנייה דחופה עם אובדן מידע, פנייה מלקוח VIP עם תקלה חמורה").
-  * אבל אל תכתוב/י רשימת מספרים/אותיות מדויקת לבחירה.
-  * תמיד סיים/י ב"ההחלטה הסופית — שלך".
+  * בהודעה הראשונה: שאל על קריטריונים כלליים, כמו "מה חשוב לך — דחיפות, סיכון ללקוח, או מהירות טיפול?". בלי דוגמאות ספציפיות.
+  * בהודעות המשך: מותר ואפילו רצוי לתת דוגמאות לסוגי פניות שמתאימים לקריטריונים (למשל "פנייה דחופה עם אובדן מידע, פנייה מלקוח VIP עם תקלה חמורה"), אבל אל תכתוב רשימת מספרים/אותיות.
+  * תמיד סיים ב"ההחלטה הסופית — שלך".
   * מותר להזכיר trade-offs ואי-ודאות.
   * כשמבקשים הסבר — פרט 1-2 שיקולים רלוונטיים בשפה פשוטה.`;
 }
@@ -599,7 +600,7 @@ function rWelcome(){
     <div style="text-align:right;max-width:500px;margin:0 auto">
       <p>שלום,</p>
       <p>את/ה עומד/ת להשתתף בסימולציה של קבלת החלטות ניהוליות.</p>
-      <p>בכל שלב יוצג תרחיש. מנהל דיגיטלי ילווה אותך — תוכל/י לשוחח איתו ולשאול שאלות.</p>
+      <p><b>התפקיד שלך:</b> את/ה מנהל/ת צוות שירות לקוחות. בכל תרחיש תצטרך/י לקבל החלטה ניהולית. המנהל/ת הישיר/ה שלך — מנהל/ת דיגיטלי/ת — ילווה אותך. תוכל/י להתייעץ, לשאול שאלות, ולקבל סיוע לפני שתחליט/י.</p>
       <p>לאחר כל בחירה תענה/י על שתי שאלות קצרות.</p>
       <p style="color:var(--text);font-weight:500">הסימולציה כוללת 5 תרחישים ונמשכת כ-10 דקות.</p>
       <p style="color:var(--error);font-size:13px;background:var(--error-bg);padding:10px 14px;border-radius:8px;margin-top:8px">⚠️ שים/י לב: המנהל הדיגיטלי מבוסס על בינה מלאכותית ועשוי לטעות. ההמלצות שלו הן כלי עזר בלבד — ההחלטה הסופית תמיד שלך.</p>
@@ -718,10 +719,10 @@ function buildLLMMessages(idx, type, userMsg=''){
 2) שאלה שמקדמת החלטה ("מה יותר חשוב לך — ___ או ___?").
 *** אסור: להזכיר שם/אות/מספר של אפשרות. אסור: "אני ממליץ", "תבחר". רק קריטריונים כלליים. ***`
       : `כתוב/כתבי עד 3 משפטים קצרים:
-1) נסח קריטריון כללי להחלטה, ותן דוגמה קונקרטית מסוג האפשרות (למשל: "פניות דחופות עם סיכון גבוה, כמו אובדן מידע או לקוח VIP עם תקלה").
-2) ציין trade-off או אי-ודאות.
-3) שאלה שמקדמת החלטה.
-*** אסור: לכתוב רשימה סופית של מספרים/אותיות לבחירה. תן למשתתף להחליט. אסור: "אני ממליץ", "תבחר". ***`;
+1) שאל על הקריטריונים החשובים למשתתף — למשל "מה חשוב לך יותר — דחיפות, השפעה על הלקוח, או מהירות טיפול?"
+2) ציין trade-off כללי (בלי דוגמאות ספציפיות מהטבלה).
+3) סיים ב"ההחלטה הסופית — שלך."
+*** בהודעה הראשונה: אסור להזכיר אפשרויות ספציפיות כמו "VIP", "אובדן מידע", שמות נציגים. רק קריטריונים כלליים. דוגמאות ספציפיות מותרות רק בהודעות המשך. ***`;
     return [sys, {role:'user',content:condPrompt}];
   }
   // Follow-up
@@ -875,37 +876,53 @@ function doSubmit(){
 // ─── Likert ───
 function rLikert1(){
   const i=ST.cur;
-  // Condition A: no AI → different wording
-  const qText = ST.cond==='A'
+  const qText1 = ST.cond==='A'
     ? 'עד כמה הסתמכת על מידע חיצוני (מעבר לנתונים שהוצגו) בקבלת ההחלטה?'
     : 'עד כמה הסתמכת על המנהל הדיגיטלי בקבלת ההחלטה?';
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש ${i+1} — שאלה 1 מתוך 2</span>
-    <div class="likert-q">${qText}</div>
-    <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="r" value="${n}" onchange="doR(${n})"><span class="lk">${n}</span></label>`).join('')}</div>
-    <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
-  </div></div>`;
-}
-function doR(v){ST.R[`R${ST.cur+1}`]=v;setTimeout(()=>{ST.phase='likert2';go()},200)}
+    <span class="scenario-badge">תרחיש ${i+1} — שאלות</span>
 
-function rLikert2(){
-  const i=ST.cur;
-  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש ${i+1} — שאלה 2 מתוך 2</span>
-    <div class="likert-q">עד כמה את/ה בטוח/ה בהחלטה שקיבלת?</div>
-    <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="c" value="${n}" onchange="doC(${n})"><span class="lk">${n}</span></label>`).join('')}</div>
-    <div class="likert-anchors"><span>בכלל לא בטוח/ה</span><span>בטוח/ה מאוד</span></div>
+    <div style="margin-bottom:28px">
+      <div class="likert-q">1. ${qText1}</div>
+      <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="r" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
+    </div>
+
+    <div>
+      <div class="likert-q">2. עד כמה את/ה בטוח/ה בהחלטה שקיבלת?</div>
+      <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="c" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      <div class="likert-anchors"><span>בכלל לא בטוח/ה</span><span>בטוח/ה מאוד</span></div>
+    </div>
+
+    <button class="btn btn-primary" id="likertSubmit" style="margin-top:24px;opacity:0.5;pointer-events:none" onclick="doLikertSubmit()">המשך</button>
   </div></div>`;
+
+  // Enable button when both answered
+  document.querySelectorAll('input[name="r"],input[name="c"]').forEach(r=>r.addEventListener('change',()=>{
+    const r1=document.querySelector('input[name="r"]:checked');
+    const r2=document.querySelector('input[name="c"]:checked');
+    const btn=$('likertSubmit');
+    if(r1&&r2){btn.style.opacity='1';btn.style.pointerEvents='auto'}
+  }));
 }
-function doC(v){
-  const i=ST.cur;ST.C[`C${i+1}`]=v;ST.ts[`S${i+1}`].end=Date.now();
-  // Save chat log only if user had actual interaction (not just choice)
+
+function doLikertSubmit(){
+  const r1=document.querySelector('input[name="r"]:checked');
+  const r2=document.querySelector('input[name="c"]:checked');
+  if(!r1||!r2)return;
+  const i=ST.cur;
+  ST.R[`R${i+1}`]=+r1.value;
+  ST.C[`C${i+1}`]=+r2.value;
+  ST.ts[`S${i+1}`].end=Date.now();
+  // Save chat log only if user had actual interaction
   const sKey=`S${i+1}`;
   if(ST.allChatLogs[sKey]&&ST.allChatLogs[sKey].length>0&&ST.chatMsgCount[sKey]>0){
     saveChatLog(i, ST.allChatLogs[sKey]);
   }
   setTimeout(()=>{if(i<4){ST.cur=i+1;ST.ts[`S${i+2}`]={start:Date.now()};ST.phase='scenario'}else{ST.tEnd=Date.now();ST.phase='manipCheck'}go()},200);
 }
+
+function rLikert2(){rLikert1()}
 
 // ─── Manipulation Check (3 questions after all scenarios) ───
 function rManipCheck(){
