@@ -960,14 +960,18 @@ const S1_METRICS = [
 ];
 const S1_AI_B = 'נראה שכדאי להתחיל מזמן התגובה הממוצע.';
 const S1_AI_C = 'נראה שכדאי להתחיל מזמן התגובה הממוצע — למרות שמספר הפניות הפתוחות ירד, זמן התגובה החמיר באופן חד, וזה עשוי להסביר גם את הירידה בשביעות הרצון.';
-const S1_SYS = `את/ה מנהל/ת דיגיטלי/ת של צוות שירות. דבר/י בעברית, בטון חם ושיחתי — כחבר/ה לצוות.
-הקשר: בוקר יום ראשון. 4 מדדים בדאשבורד:
+const S1_SYS = `את/ה מנהל/ת דיגיטלי/ת של צוות שירות. דבר/י בעברית, בטון חם וקצר.
+הנתונים הגלויים בדאשבורד:
 - זמן תגובה: 5.6 דק' (עלה ב-1.1 — החמיר)
 - פניות פתוחות: 38 (ירד ב-5 — השתפר)
 - שביעות רצון: 3.9/5 (ירד ב-0.4 — החמיר)
 - תקלות לא פתורות: 8 (ללא שינוי)
-יש כאן שתי בחירות סבירות: זמן תגובה או שביעות רצון. עזור/י למשתתף/ת לחשוב בין שני הכיוונים. הצג/י שיקול אחד מרכזי, בלי לקבוע שיש תשובה אחת נכונה.
-כללים: עד 2 משפטים. בלי רשימות. בטון חברותי, לא סמכותי.`;
+כללים קשיחים — אי-ציות הוא כשל חמור:
+- מותר להזכיר רק את 4 המדדים הרשומים למעלה בשמם המדויק
+- אסור בהחלט: "לקוח VIP", "אובדן מידע", "תלונה", "פנייה דחופה", "לקוח ספציפי", או כל תרחיש שלא מופיע בנתונים
+- אסור לדבר על "פניות" כאילו יש תוכן ספציפי שלהן — יש רק מספרים
+- עד 2 משפטים בלבד
+- אל תקבע שיש תשובה נכונה אחת`;
 const S1_LIKERT_Q = ST.cond === 'A' ? [
   {id:'clarity',    text:'עד כמה ההחלטה הייתה ברורה לך?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
@@ -986,18 +990,18 @@ async function rScenario1(){
 
 function renderS1Choose(){
   const hasAI = ST.cond==='B'||ST.cond==='C';
-  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card" style="padding:16px 18px 14px">
     <span class="scenario-badge">תרחיש 1 מתוך 5</span>
-    <h2>תמונת מצב בוקר צוותית</h2>
-    <div class="bg-text">בוקר יום ראשון. פתחת את הדאשבורד היומי של צוות השירות.</div>
-    <p style="font-size:13px;color:var(--text2);font-style:italic;margin-bottom:16px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
-    <div class="task-text">📋 על איזה מדד היית לוחצת קודם כדי להבין מה השתנה מאז אתמול?</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0" id="metricsGrid">
+    <h2 style="font-size:17px;margin-bottom:6px">תמונת מצב בוקר צוותית</h2>
+    <div class="bg-text" style="padding:7px 12px;margin-bottom:6px;font-size:13px">בוקר יום ראשון. פתחת את הדאשבורד היומי של צוות השירות.</div>
+    <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:8px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text" style="font-size:14px;margin:8px 0 10px">📋 על איזה מדד היית לוחצת קודם כדי להבין מה השתנה מאז אתמול?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0" id="metricsGrid">
       ${S1_METRICS.map(m=>`
-        <div class="metric-card" id="mc_${m.id}" onclick="s1SelectMetric('${m.id}')" style="background:#f8f9fb;border:2px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:all .2s;text-align:center">
-          <span style="font-size:28px;display:block;margin-bottom:8px">${m.icon}</span>
-          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">${m.name}</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">${m.value}</div>
+        <div class="metric-card" id="mc_${m.id}" onclick="s1SelectMetric('${m.id}')" style="background:#f8f9fb;border:2px solid var(--border);border-radius:14px;padding:8px 8px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:18px;display:block;margin-bottom:2px">${m.icon}</span>
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:2px">${m.name}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px">${m.value}</div>
           <span style="font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block" class="${m.changeClass}">${m.change}</span>
         </div>`).join('')}
     </div>
@@ -1010,8 +1014,8 @@ function renderS1Choose(){
         <div id="s1AiText"></div>
       </div>
       <div style="margin-bottom:12px">
-        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px">למה בחרת במדד הזה? <span style="font-style:italic">(אופציונלי)</span></label>
-        <textarea id="s1ExplainText" placeholder="כתוב/י כאן..." style="width:100%;padding:10px 14px;font-size:14px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;resize:none;height:70px;transition:border .2s"></textarea>
+        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px">לא חובה: למה בחרת במדד הזה קודם?</label>
+        <textarea id="s1ExplainText" placeholder="כתוב/י במשפט חופשי, ואם אין לך – אפשר להמשיך בלי לכתוב." style="width:100%;padding:10px 14px;font-size:14px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;resize:none;height:70px;transition:border .2s"></textarea>
       </div>
       <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px" id="s1ChangeHint"></p>
       <button class="btn btn-primary" id="s1NextBtn" onclick="s1GoToChat()">המשך לשיחה עם המנהל הדיגיטלי ←</button>
@@ -1022,14 +1026,20 @@ function renderS1Choose(){
 function s1SelectMetric(id){
   if(ST.s1.firstChoice) return;
   ST.s1.firstChoice = id;
-  document.querySelectorAll('[id^="mc_"]').forEach(c=>{
-    c.style.opacity='0.5';c.style.cursor='not-allowed';c.style.pointerEvents='none';
-  });
-  const sel = document.getElementById('mc_'+id);
-  sel.style.opacity='1';sel.style.border='2px solid var(--primary)';
-  sel.style.background='var(--primary-light)';sel.style.pointerEvents='none';
+  // Hide unselected cards, show only selected compactly
+  const grid = document.getElementById('metricsGrid');
+  const selMetric = S1_METRICS.find(x=>x.id===id);
+  grid.innerHTML = `<div style="grid-column:1/-1;background:var(--primary-light);border:2px solid var(--primary);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:22px">${selMetric.icon}</span>
+    <div>
+      <div style="font-size:12px;color:var(--text2);font-weight:600">${selMetric.name}</div>
+      <div style="font-size:16px;font-weight:700;color:var(--text)">${selMetric.value} <span style="font-size:12px;font-weight:500" class="${selMetric.changeClass}">${selMetric.change}</span></div>
+    </div>
+    <span style="margin-right:auto;font-size:12px;color:var(--primary);font-weight:500">✓ בחירה ראשונית</span>
+  </div>`;
   // Show explain box
   document.getElementById('s1ExplainBox').style.display='block';
+  setTimeout(()=>document.getElementById('s1ExplainBox').scrollIntoView({behavior:'smooth',block:'start'}),100);
   // Show AI bubble for B/C (with typing delay)
   if(ST.cond==='B'||ST.cond==='C'){
     const bubble = document.getElementById('s1AiBubble');
@@ -1055,8 +1065,11 @@ async function s1GoToChat(){
   }
   // B/C: go to chat
   const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
-  const openMsg = `בחרתי להתחיל מ"${m.name}". מה נראה לך המדד שהכי יעזור להבין מה השתנה מאתמול?`;
-  ST.chatHistory.push({role:'user', content:openMsg});
+  // AI opens the chat with reference to the user's choice
+  const openMsg = `המשתתף בחר "${m.name}". כתוב/י תשובה קצרה בדיוק במבנה הזה:
+1) "יש כאן שני כיוונים סבירים: זמן תגובה ממוצע ושביעות רצון לקוחות."
+2) משפט אחד קצר מדוע אתה נוטה לאחד מהם — רק על בסיס הנתונים הגלויים.
+אסור להמציא דוגמאות שלא בדאשבורד. עד 2 משפטים בלבד.`;
   renderS1Chat();
   s1SendFirst(openMsg);
 }
@@ -1073,30 +1086,48 @@ function renderS1Chat(){
       </div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
+      <div id="quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
+        <button onclick="s1QuickReply(this,'למה דווקא זמן תגובה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה דווקא זמן תגובה?</button>
+        <button onclick="s1QuickReply(this,'למה לא להתחיל משביעות רצון?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה לא להתחיל משביעות רצון?</button>
+        <button onclick="s1QuickReply(this,'איזה מדד נוסף גם הגיוני לבדוק?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">איזה מדד נוסף גם הגיוני לבדוק?</button>
+      </div>
       <div class="chat-input">
-        <input type="text" id="chatText" placeholder="שאל/י שאלה או שתף/י מחשבה..." onkeydown="if(event.key==='Enter')s1SendMsg()">
+        <input type="text" id="chatText" placeholder="רוצה להסביר במשפט חופשי? (לא חובה)" onkeydown="if(event.key==='Enter')s1SendMsg()">
         <button id="sendBtn" onclick="s1SendMsg()">שלח</button>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
-      <button class="btn btn-secondary" onclick="s1GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← שנה את הבחירה שלי</button>
-      <button class="btn btn-primary" onclick="s1ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">אני בטוח/ה בבחירתי ←</button>
+      <button class="btn btn-secondary" onclick="s1GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור מדד אחר</button>
+      <button class="btn btn-primary" onclick="s1ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
     </div>
   </div></div>`;
-  ST.chatHistory.forEach(m=>s1AddMsg(m.role==='user'?'user':'ai', m.content));
   s1UpdateRounds();
 }
 
-async function s1SendFirst(text){
-  s1AddMsg('user', text);
+async function s1SendFirst(instructions){
+  // instructions is a system-level prompt, not shown to user
+  // push as user message internally so LLM gets context
+  ST.chatHistory.push({role:'user', content:instructions});
   s1ShowTyping();
   const reply = await s1CallLLM();
   s1HideTyping();
+  // Remove the instructions from history, keep only AI reply
+  ST.chatHistory.pop();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s1AddMsg('ai',reply);}
 }
 
+function s1QuickReply(btn, text){
+  // Hide quick replies after use
+  const qr = document.getElementById('quickReplies');
+  if(qr) qr.style.display='none';
+  // Put text in input and send
+  const inp = document.getElementById('chatText');
+  if(inp) inp.value = text;
+  s1SendMsg();
+}
+
 async function s1SendMsg(){
-  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  if(ST.chatRounds>=1)return; // max 1 follow-up
   const inp=document.getElementById('chatText');
   const text=inp?.value?.trim();
   if(!text)return;
@@ -1104,7 +1135,13 @@ async function s1SendMsg(){
   ST.chatHistory.push({role:'user',content:text});
   ST.chatRounds++;
   s1AddMsg('user',text);
-  s1UpdateRounds();
+  // Hide input area after sending
+  const chatInput = document.querySelector('.chat-input');
+  const qr = document.getElementById('quickReplies');
+  const rl = document.getElementById('roundsLeft');
+  if(chatInput) chatInput.style.display='none';
+  if(qr) qr.style.display='none';
+  if(rl) rl.style.display='none';
   s1ShowTyping();
   const reply=await s1CallLLM();
   s1HideTyping();
@@ -1151,12 +1188,12 @@ function s1GoConfirm(){
     <span class="scenario-badge">תרחיש 1 — בחירה סופית</span>
     <h2>מה הבחירה הסופית שלך?</h2>
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">בחירה ראשונית: <strong>${m.icon} ${m.name}</strong> — תוכל/י לשנות.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0">
       ${S1_METRICS.map(x=>`
-        <div onclick="s1SetFinal('${x.id}')" id="fc_${x.id}" style="background:#f8f9fb;border:2px solid ${ST.s1.finalChoice===x.id?'var(--success)':ST.s1.firstChoice===x.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:18px 16px;cursor:pointer;transition:all .2s;text-align:center">
-          <span style="font-size:28px;display:block;margin-bottom:8px">${x.icon}</span>
-          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">${x.name}</div>
-          <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">${x.value}</div>
+        <div onclick="s1SetFinal('${x.id}')" id="fc_${x.id}" style="background:#f8f9fb;border:2px solid ${ST.s1.finalChoice===x.id?'var(--success)':ST.s1.firstChoice===x.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:8px 8px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:18px;display:block;margin-bottom:2px">${x.icon}</span>
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:2px">${x.name}</div>
+          <div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px">${x.value}</div>
           <span style="font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block" class="${x.changeClass}">${x.change}</span>
         </div>`).join('')}
     </div>
