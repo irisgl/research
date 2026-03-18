@@ -1101,6 +1101,7 @@ async function s1SendMsg(){
   ST.chatHistory.push({role:'user',content:text});
   ST.chatRounds++;
   s1AddMsg('user',text);
+  s1UpdateRounds();
   // Hide quick replies after first use
   const qr = document.getElementById('quickReplies');
   if(qr) qr.style.display='none';
