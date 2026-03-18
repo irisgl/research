@@ -1035,9 +1035,23 @@ async function s1GoToChat(){
   // B/C: go to chat
   const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
   // AI opens the chat with reference to the user's choice
-  const openMsg = `המשתתף בחר "${m.name}". כתוב/י פסקה רציפה אחת ללא 1) 2) או רשימות. אמור/י שיש שני מדדים שהחמירו — זמן תגובה ושביעות רצון — ובמשפט אחד הסבר/י למה זמן תגובה הוא נקודת הפתיחה ההגיונית יותר על בסיס הנתונים בלבד.`;
+  // Hardcoded first response - no LLM hallucinations
+  const S1_FIRST_C = {
+    response_time: 'יש כאן שני כיוונים סבירים: זמן תגובה ושביעות רצון לקוחות. אני נוטה לזמן התגובה — הוא החמיר הכי חד ויכול להסביר גם את הירידה בשביעות הרצון.',
+    satisfaction:  'יש כאן שני כיוונים סבירים: שביעות רצון וזמן תגובה. אני נוטה לשביעות הרצון — היא משקפת את תחושת הלקוח הכוללת, שזה מה שחשוב לטווח הארוך.',
+    open_tickets:  'יש כאן שני כיוונים סבירים: זמן תגובה ושביעות רצון לקוחות. פניות פתוחות דווקא ירדו — אולי כדאי להתמקד במדד שהחמיר.',
+    open_issues:   'יש כאן שני כיוונים סבירים: זמן תגובה ושביעות רצון לקוחות. תקלות לא פתורות יציבות — אולי כדאי להתמקד במדד שהחמיר.'
+  };
+  const S1_FIRST_B = {
+    response_time: 'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+    satisfaction:  'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+    open_tickets:  'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+    open_issues:   'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.'
+  };
   renderS1Chat();
-  s1SendFirst(openMsg);
+  const firstReply = ST.cond === 'C' ? (S1_FIRST_C[ST.s1.firstChoice]||S1_FIRST_C.response_time) : (S1_FIRST_B[ST.s1.firstChoice]||S1_FIRST_B.response_time);
+  ST.chatHistory.push({role:'assistant', content: firstReply});
+  s1AddMsg('ai', firstReply);
 }
 
 function renderS1Chat(){
