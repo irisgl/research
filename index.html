@@ -987,11 +987,6 @@ function renderS1Choose(){
         </div>
         <div id="s1AiText"></div>
       </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px">לא חובה: למה בחרת במדד הזה קודם?</label>
-        <textarea id="s1ExplainText" placeholder="כתוב/י במשפט חופשי, ואם אין לך – אפשר להמשיך בלי לכתוב." style="width:100%;padding:10px 14px;font-size:14px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;resize:none;height:70px;transition:border .2s"></textarea>
-      </div>
-      <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px" id="s1ChangeHint"></p>
       <button class="btn btn-primary" id="s1NextBtn" onclick="s1GoToChat()">המשך לשיחה עם המנהל הדיגיטלי ←</button>
     </div>
   </div></div>`;
@@ -1040,10 +1035,7 @@ async function s1GoToChat(){
   // B/C: go to chat
   const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
   // AI opens the chat with reference to the user's choice
-  const openMsg = `המשתתף בחר "${m.name}". כתוב/י תשובה קצרה בדיוק במבנה הזה:
-1) "יש כאן שני כיוונים סבירים: זמן תגובה ממוצע ושביעות רצון לקוחות."
-2) משפט אחד קצר מדוע אתה נוטה לאחד מהם — רק על בסיס הנתונים הגלויים.
-אסור להמציא דוגמאות שלא בדאשבורד. עד 2 משפטים בלבד.`;
+  const openMsg = `המשתתף בחר "${m.name}". כתוב/י פסקה רציפה אחת ללא 1) 2) או רשימות. אמור/י שיש שני מדדים שהחמירו — זמן תגובה ושביעות רצון — ובמשפט אחד הסבר/י למה זמן תגובה הוא נקודת הפתיחה ההגיונית יותר על בסיס הנתונים בלבד.`;
   renderS1Chat();
   s1SendFirst(openMsg);
 }
@@ -1066,7 +1058,7 @@ function renderS1Chat(){
         <button onclick="s1QuickReply(this,'איזה מדד נוסף גם הגיוני לבדוק?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">איזה מדד נוסף גם הגיוני לבדוק?</button>
       </div>
       <div class="chat-input">
-        <input type="text" id="chatText" placeholder="רוצה להסביר במשפט חופשי? (לא חובה)" onkeydown="if(event.key==='Enter')s1SendMsg()">
+        <input type="text" id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')s1SendMsg()">
         <button id="sendBtn" onclick="s1SendMsg()">שלח</button>
       </div>
     </div>
