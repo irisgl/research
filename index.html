@@ -658,6 +658,9 @@ function doStart(){
 // ═══════════════════════════════════════════════════
 function renderSurveyPage({title,subtitle,items,scaleMin,scaleMax,anchorLow,anchorHigh,prefix,nextPhase,pageNum,totalPages}){
   const scaleRange=[];for(let i=scaleMin;i<=scaleMax;i++)scaleRange.push(i);
+  const isMobile=window.innerWidth<=600;
+  const mobileRange=(scaleMax-scaleMin>7)?scaleRange.filter(n=>n%2===0):scaleRange;
+  const displayRange=isMobile?mobileRange:scaleRange;
   const surveyProgress=pageNum&&totalPages?`<div style="font-size:13px;color:var(--text2);margin-bottom:12px">עמוד ${pageNum} מתוך ${totalPages}</div>`:'';
   app.innerHTML=`<div class="screen"><div class="card" style="max-width:700px;margin:0 auto">
     <div style="direction:rtl;text-align:right"><h2>${title}</h2>
@@ -667,7 +670,7 @@ function renderSurveyPage({title,subtitle,items,scaleMin,scaleMax,anchorLow,anch
     ${items.map((q,idx)=>`
       <div style="margin-bottom:18px;padding:14px 16px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border)">
         <div style="font-size:14px;margin-bottom:10px;line-height:1.6;direction:ltr;text-align:left">${q}</div>
-        <div class="likert-scale" style="direction:ltr">${scaleRange.map(n=>`<label><input type="radio" name="sq_${idx}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+        <div class="likert-scale" style="direction:ltr">${displayRange.map(n=>`<label><input type="radio" name="sq_${idx}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
       </div>`).join('')}
     <div class="error-msg" id="survErr" style="direction:rtl;text-align:right"></div>
     <button class="btn btn-primary" onclick="submitSurveyPage('${prefix}',${items.length},'${nextPhase}')">המשך →</button>
@@ -1272,6 +1275,12 @@ function submitManipCheck(){
 // ─── Done ───
 async function rDone(){
   const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
+  const redirectUrl=(()=>{
+    const base=new URLSearchParams(location.search).get('redirect')||'';
+    if(!base||!PARTICIPANT_ID) return base;
+    const sep=base.includes('?')?'&':'?';
+    return base+sep+'pid='+encodeURIComponent(PARTICIPANT_ID);
+  })();
   app.innerHTML=`<div class="screen">
     <div class="progress-bar">${[0,1,2,3,4].map(()=>'<div class="progress-step done"></div>').join('')}</div>
     <div class="card" style="text-align:center;padding:40px 32px">
@@ -1283,8 +1292,14 @@ async function rDone(){
       <br><p style="font-size:18px;color:var(--text)">תודה רבה על ההשתתפות! 🙏</p>
     </div></div>`;
   const res=await saveToSheets(buildRow());const el=$('ss');
-  if(res.ok){el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)'}
-  else if(res.reason==='no_url'){el.innerHTML='⚠️ שמירה אוטומטית לא הוגדרה';el.style.color='#e68a00'}
+  if(res.ok){
+    el.innerHTML='✅ הנתונים נשמרו בהצלחה';el.style.color='var(--success)';
+    if(redirectUrl){setTimeout(()=>{window.location.href=redirectUrl},1500)}
+  }
+  else if(res.reason==='no_url'){
+    el.innerHTML='⚠️ שמירה אוטומטית לא הוגדרה';el.style.color='#e68a00';
+    if(redirectUrl){setTimeout(()=>{window.location.href=redirectUrl},1500)}
+  }
   else{el.innerHTML='⚠️ אירעה שגיאה בשמירה — נא לפנות לחוקר/ת';el.style.color='var(--error)'}
 }
 
