@@ -943,6 +943,305 @@ function rPostUEQ(){
 
 // ─── Scenario (with chat) ───
 async function rScenario(){
+  const i=ST.cur;
+  if(i===0){
+    await rScenario1();
+  } else {
+    await rScenarioOriginal();
+  }
+}
+
+// ─── Scenario 1: Dashboard (new flow) ───
+const S1_METRICS = [
+  {id:'response_time', icon:'⏳', name:'זמן תגובה ממוצע',    value:"5.6 דק'", change:'🔴 עלה ב-1.1', changeClass:'change-red',    changeText:"עלה ב-1.1 דק' מאתמול"},
+  {id:'open_tickets',  icon:'✉️', name:'פניות פתוחות',        value:'38',       change:'🟢 ירד ב-5',   changeClass:'change-green',  changeText:'ירד ב-5 מאתמול'},
+  {id:'satisfaction',  icon:'⭐', name:'שביעות רצון לקוחות',  value:'3.9/5',    change:'🔴 ירד ב-0.4', changeClass:'change-red',    changeText:'ירד ב-0.4 מאתמול'},
+  {id:'open_issues',   icon:'⚠️', name:'תקלות לא פתורות',     value:'8',        change:'🟠 ללא שינוי', changeClass:'change-orange', changeText:'ללא שינוי מאתמול'},
+];
+const S1_AI_B = 'נראה שכדאי להתחיל מזמן התגובה הממוצע.';
+const S1_AI_C = 'נראה שכדאי להתחיל מזמן התגובה הממוצע — למרות שמספר הפניות הפתוחות ירד, זמן התגובה החמיר באופן חד, וזה עשוי להסביר גם את הירידה בשביעות הרצון.';
+const S1_SYS = `את/ה מנהל/ת דיגיטלי/ת של צוות שירות. דבר/י בעברית, בטון חם ושיחתי — כחבר/ה לצוות.
+הקשר: בוקר יום ראשון. 4 מדדים בדאשבורד:
+- זמן תגובה: 5.6 דק' (עלה ב-1.1 — החמיר)
+- פניות פתוחות: 38 (ירד ב-5 — השתפר)
+- שביעות רצון: 3.9/5 (ירד ב-0.4 — החמיר)
+- תקלות לא פתורות: 8 (ללא שינוי)
+יש כאן שתי בחירות סבירות: זמן תגובה או שביעות רצון. עזור/י למשתתף/ת לחשוב בין שני הכיוונים. הצג/י שיקול אחד מרכזי, בלי לקבוע שיש תשובה אחת נכונה.
+כללים: עד 2 משפטים. בלי רשימות. בטון חברותי, לא סמכותי.`;
+const S1_LIKERT_Q = ST.cond === 'A' ? [
+  {id:'clarity',    text:'עד כמה ההחלטה הייתה ברורה לך?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',       text:'עד כמה היה לך קל לבחור מה לבדוק קודם?'},
+] : [
+  {id:'helpful',    text:'האם ההמלצה של המנהל הדיגיטלי עזרה לך לקבל החלטה?'},
+  {id:'trust',      text:'באיזו מידה הרגשת שהמנהל הדיגיטלי מבין את סדרי העדיפויות בצוות?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+];
+
+async function rScenario1(){
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.s1={firstChoice:null, finalChoice:null, explanation:'', chatRounds:0};
+  renderS1Choose();
+}
+
+function renderS1Choose(){
+  const hasAI = ST.cond==='B'||ST.cond==='C';
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 1 מתוך 5</span>
+    <h2>תמונת מצב בוקר צוותית</h2>
+    <div class="bg-text">בוקר יום ראשון. פתחת את הדאשבורד היומי של צוות השירות.</div>
+    <p style="font-size:13px;color:var(--text2);font-style:italic;margin-bottom:16px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text">📋 על איזה מדד היית לוחצת קודם כדי להבין מה השתנה מאז אתמול?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0" id="metricsGrid">
+      ${S1_METRICS.map(m=>`
+        <div class="metric-card" id="mc_${m.id}" onclick="s1SelectMetric('${m.id}')" style="background:#f8f9fb;border:2px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:28px;display:block;margin-bottom:8px">${m.icon}</span>
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">${m.name}</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">${m.value}</div>
+          <span style="font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block" class="${m.changeClass}">${m.change}</span>
+        </div>`).join('')}
+    </div>
+    <div id="s1ExplainBox" style="display:none;margin:12px 0">
+      <div id="s1AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:14px 18px;margin-bottom:12px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+        </div>
+        <div id="s1AiText"></div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:500;color:var(--text2);display:block;margin-bottom:6px">למה בחרת במדד הזה? <span style="font-style:italic">(אופציונלי)</span></label>
+        <textarea id="s1ExplainText" placeholder="כתוב/י כאן..." style="width:100%;padding:10px 14px;font-size:14px;font-family:'Rubik',sans-serif;border:1.5px solid var(--border);border-radius:10px;outline:none;resize:none;height:70px;transition:border .2s"></textarea>
+      </div>
+      <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px" id="s1ChangeHint"></p>
+      <button class="btn btn-primary" id="s1NextBtn" onclick="s1GoToChat()">המשך לשיחה עם המנהל הדיגיטלי ←</button>
+    </div>
+  </div></div>`;
+}
+
+function s1SelectMetric(id){
+  if(ST.s1.firstChoice) return;
+  ST.s1.firstChoice = id;
+  document.querySelectorAll('[id^="mc_"]').forEach(c=>{
+    c.style.opacity='0.5';c.style.cursor='not-allowed';c.style.pointerEvents='none';
+  });
+  const sel = document.getElementById('mc_'+id);
+  sel.style.opacity='1';sel.style.border='2px solid var(--primary)';
+  sel.style.background='var(--primary-light)';sel.style.pointerEvents='none';
+  // Show explain box
+  document.getElementById('s1ExplainBox').style.display='block';
+  // Show AI bubble for B/C (with typing delay)
+  if(ST.cond==='B'||ST.cond==='C'){
+    const bubble = document.getElementById('s1AiBubble');
+    const aiText = document.getElementById('s1AiText');
+    bubble.style.display='block';
+    aiText.innerHTML='<span style="opacity:.5">מקליד/ה...</span>';
+    setTimeout(()=>{
+      aiText.textContent = ST.cond==='C' ? S1_AI_C : S1_AI_B;
+    }, 1200);
+    document.getElementById('s1ChangeHint').textContent='בחירה ראשונית — אפשר לשנות אחרי השיחה עם המנהל הדיגיטלי.';
+    document.getElementById('s1NextBtn').textContent='המשך לשיחה עם המנהל הדיגיטלי ←';
+  } else {
+    document.getElementById('s1ChangeHint').textContent='בחירה ראשונית — תוכל/י לשנות לפני האישור הסופי.';
+    document.getElementById('s1NextBtn').textContent='המשך לאישור סופי ←';
+  }
+}
+
+async function s1GoToChat(){
+  ST.s1.explanation = document.getElementById('s1ExplainText')?.value||'';
+  if(ST.cond==='A'){
+    s1GoConfirm();
+    return;
+  }
+  // B/C: go to chat
+  const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
+  const openMsg = `בחרתי להתחיל מ"${m.name}". מה נראה לך המדד שהכי יעזור להבין מה השתנה מאתמול?`;
+  ST.chatHistory.push({role:'user', content:openMsg});
+  renderS1Chat();
+  s1SendFirst(openMsg);
+}
+
+function renderS1Chat(){
+  const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 1 — שיחה עם המנהל הדיגיטלי</span>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${m.icon} ${m.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div class="chat-area" style="display:block">
+      <div class="chat-header">
+        <div class="avatar">🤖</div>
+        <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+      </div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
+      <div class="chat-input">
+        <input type="text" id="chatText" placeholder="שאל/י שאלה או שתף/י מחשבה..." onkeydown="if(event.key==='Enter')s1SendMsg()">
+        <button id="sendBtn" onclick="s1SendMsg()">שלח</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="s1GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← שנה את הבחירה שלי</button>
+      <button class="btn btn-primary" onclick="s1ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">אני בטוח/ה בבחירתי ←</button>
+    </div>
+  </div></div>`;
+  ST.chatHistory.forEach(m=>s1AddMsg(m.role==='user'?'user':'ai', m.content));
+  s1UpdateRounds();
+}
+
+async function s1SendFirst(text){
+  s1AddMsg('user', text);
+  s1ShowTyping();
+  const reply = await s1CallLLM();
+  s1HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s1AddMsg('ai',reply);}
+}
+
+async function s1SendMsg(){
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  const inp=document.getElementById('chatText');
+  const text=inp?.value?.trim();
+  if(!text)return;
+  inp.value='';
+  ST.chatHistory.push({role:'user',content:text});
+  ST.chatRounds++;
+  s1AddMsg('user',text);
+  s1UpdateRounds();
+  s1ShowTyping();
+  const reply=await s1CallLLM();
+  s1HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s1AddMsg('ai',reply);}
+}
+
+function s1AddMsg(role,text){
+  const msgs=document.getElementById('chatMsgs');
+  if(!msgs)return;
+  const d=document.createElement('div');
+  d.className=`msg ${role}`;d.textContent=text;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function s1ShowTyping(){
+  const msgs=document.getElementById('chatMsgs');if(!msgs)return;
+  const t=document.createElement('div');t.className='typing';t.id='s1typing';
+  t.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;
+}
+function s1HideTyping(){document.getElementById('s1typing')?.remove();}
+
+function s1UpdateRounds(){
+  const el=document.getElementById('roundsLeft');
+  if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;
+  const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;
+  const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;
+}
+
+function s1GoChangeChoice(){
+  ST.s1.firstChoice=null;ST.s1.finalChoice=null;
+  ST.chatHistory=[];ST.chatRounds=0;
+  renderS1Choose();
+}
+
+function s1ConfirmSame(){
+  ST.s1.finalChoice=ST.s1.firstChoice;
+  s1GoLikert();
+}
+
+function s1GoConfirm(){
+  const m=S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 1 — בחירה סופית</span>
+    <h2>מה הבחירה הסופית שלך?</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">בחירה ראשונית: <strong>${m.icon} ${m.name}</strong> — תוכל/י לשנות.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0">
+      ${S1_METRICS.map(x=>`
+        <div onclick="s1SetFinal('${x.id}')" id="fc_${x.id}" style="background:#f8f9fb;border:2px solid ${ST.s1.finalChoice===x.id?'var(--success)':ST.s1.firstChoice===x.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:18px 16px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:28px;display:block;margin-bottom:8px">${x.icon}</span>
+          <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px">${x.name}</div>
+          <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:6px">${x.value}</div>
+          <span style="font-size:12px;font-weight:500;padding:3px 10px;border-radius:20px;display:inline-block" class="${x.changeClass}">${x.change}</span>
+        </div>`).join('')}
+    </div>
+    <div class="error-msg" id="s1ConfirmErr"></div>
+    <button class="btn btn-primary" onclick="s1SubmitFinal()">אשר/י בחירה סופית ←</button>
+  </div></div>`;
+  if(!ST.s1.finalChoice) ST.s1.finalChoice=ST.s1.firstChoice;
+  document.getElementById('fc_'+ST.s1.finalChoice)?.style.setProperty('border-color','var(--success)');
+}
+
+function s1SetFinal(id){
+  ST.s1.finalChoice=id;
+  document.querySelectorAll('[id^="fc_"]').forEach(c=>c.style.borderColor='var(--border)');
+  document.getElementById('fc_'+id).style.borderColor='var(--success)';
+}
+
+function s1SubmitFinal(){
+  if(!ST.s1.finalChoice){document.getElementById('s1ConfirmErr').textContent='נא לבחור מדד.';document.getElementById('s1ConfirmErr').classList.add('show');return;}
+  s1GoLikert();
+}
+
+function s1GoLikert(){
+  const questions = S1_LIKERT_Q;
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 1 — שאלות סיום</span>
+    <h2>עוד 3 שאלות קצרות</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">1 = בכלל לא &nbsp;·&nbsp; 7 = במידה רבה מאוד</div>
+    ${questions.map((q,i)=>`
+      <div style="margin-bottom:20px">
+        <div class="likert-q">${i+1}. ${q.text}</div>
+        <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="s1lk_${q.id}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      </div>`).join('')}
+    <div class="error-msg" id="s1LikertErr"></div>
+    <button class="btn btn-primary" onclick="s1SubmitLikert()">המשך לתרחיש הבא ←</button>
+  </div></div>`;
+}
+
+function s1SubmitLikert(){
+  const questions = S1_LIKERT_Q;
+  const vals={};
+  for(const q of questions){
+    const v=document.querySelector(`input[name="s1lk_${q.id}"]:checked`);
+    if(!v){document.getElementById('s1LikertErr').textContent='נא לענות על כל השאלות.';document.getElementById('s1LikertErr').classList.add('show');return;}
+    vals[q.id]=+v.value;
+  }
+  // Save to ST
+  ST.R[`R1`]=vals.confidence||vals.ease||0;
+  ST.C[`C1`]=vals.helpful||vals.clarity||0;
+  ST.s1.likert=vals;
+  ST.D[`D1`]=ST.s1.finalChoice||ST.s1.firstChoice;
+  ST.ts[`S1`]={...ST.ts[`S1`], end:Date.now()};
+  // Save chat log
+  if(ST.chatHistory.length>0){
+    ST.allChatLogs[`S1`]=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
+    saveChatLog(0, ST.allChatLogs[`S1`]);
+  }
+  setTimeout(()=>{ST.cur=1;ST.ts[`S2`]={start:Date.now()};ST.phase='scenario';go();},200);
+}
+
+async function s1CallLLM(){
+  if(!CONFIG.APPS_SCRIPT_URL)return 'לא הצלחתי להתחבר.';
+  const msgs=ST.chatHistory.filter(m=>m.role!=='system').slice(-6);
+  const compact={idx:0,cond:ST.cond,msgs,model:CONFIG.MODEL,pid:PARTICIPANT_ID,sys:S1_SYS};
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const payload=encodeURIComponent(JSON.stringify(compact));
+      const cbName='s1cb_'+Date.now()+'_'+attempt;
+      const result=await new Promise(resolve=>{
+        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        window[cbName]=d=>{clearTimeout(timeout);resolve(d.reply||null);cleanup()};
+        function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+        const s=document.createElement('script');
+        s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+        s.onerror=()=>{clearTimeout(timeout);resolve(null);cleanup()};
+        document.body.appendChild(s);
+      });
+      if(result)return result;
+      if(attempt<1)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){}
+  }
+  return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
+}
+
+// ─── Original Scenario (with chat) ─── (scenarios 2-5)
+async function rScenarioOriginal(){
   const i=ST.cur, s=SCENARIOS[i];
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
 
