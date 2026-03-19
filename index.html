@@ -943,6 +943,8 @@ async function rScenario(){
     await rScenario3();
   } else if(i===3){
     await rScenario4();
+  } else if(i===4){
+    await rScenario5();
   } else {
     await rScenarioOriginal();
   }
@@ -2033,6 +2035,205 @@ async function s4CallLLM(){
     }catch(e){}
   }
   return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
+}
+
+
+// ─── Scenario 5: Message to Clients ───
+const S5_OPTIONS = [
+  {id:'opt1', label:'אפשרות 1', desc:'אנחנו מזהים עיכוב קל בטיפול בחלק מהפניות ובודקים את הנושא. נעדכן בהמשך אם יהיה צורך.'},
+  {id:'opt2', label:'אפשרות 2', desc:'נראה שיש כרגע עומס בתהליך, ולכן ייתכן עיכוב במענה. אנחנו עובדים על קיצור זמני הטיפול.'},
+  {id:'opt3', label:'אפשרות 3', desc:'כרגע אין צורך בעדכון ללקוחות. עדיף להמתין לעוד מידע לפני שמוציאים הודעה.'},
+  {id:'opt4', label:'אפשרות 4', desc:'יש תקלה שמשפיעה על הטיפול בפניות, ואנחנו פועלים כדי לפתור אותה.'},
+];
+const S5_AI_B = 'נראה שכדאי ללכת על אפשרות 1.';
+const S5_AI_C = 'נראה שכדאי ללכת על אפשרות 1 — היא שקופה ומדויקת מבלי לעורר חרדה מיותרת, ומשאירה מרחב לעדכון בהמשך.';
+const S5_FIRST_C = {
+  opt1:'יש כאן שני כיוונים סבירים: אפשרות 1 ואפשרות 2. אני נוטה לאפשרות 1 — היא שקופה ומדויקת בלי להבטיח יותר מדי.',
+  opt2:'יש כאן שני כיוונים סבירים: אפשרות 2 ואפשרות 1. אפשרות 2 מראה פעולה, אבל אפשרות 1 שומרת על גמישות לפני שיש תמונה מלאה.',
+  opt3:'יש כאן שני כיוונים סבירים: אפשרות 1 ואפשרות 2. המתנה יכולה להיות נכונה, אבל הלקוחות כבר שולחים פניות חוזרות.',
+  opt4:'יש כאן שני כיוונים סבירים: אפשרות 1 ואפשרות 2. אפשרות 4 עלולה לעורר חרדה כשעדיין לא ברורה הסיבה.',
+};
+const S5_FIRST_B = {opt1:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם.',opt2:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם.',opt3:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם.',opt4:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם.'};
+const S5_QR = [
+  {text:'למה לא להמתין לעוד מידע?', reply_c:'כי הלקוחות כבר שולחים פניות חוזרות — הם כבר שמים לב. עדכון קצר יכול להפחית תסכול.', reply_b:'כי יש סיבה שמצדיקה פעולה עכשיו.'},
+  {text:'למה לא אפשרות 4?', reply_c:'כי "תקלה" עלולה לעורר חרדה — ועדיין לא ברור שזו תקלה ולא עומס זמני.', reply_b:'כי הניסוח עשוי להיות חזק יותר ממה שהמצב מצדיק.'},
+  {text:'מה ההבדל בין 1 ל-2?', reply_c:'אפשרות 1 שקופה ולא מבטיחה פתרון מיידי. אפשרות 2 מראה פעולה אבל מבטיחה "קיצור זמנים" שאולי קשה לעמוד בו.', reply_b:'הן שתיהן סבירות אבל עם גישה שונה לתקשורת.'},
+];
+function getS5LikertQ(){ return ST.cond==='A'?[
+  {id:'clarity',text:'עד כמה היה לך ברור איזו הודעה לשלוח?'},
+  {id:'confidence',text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',text:'עד כמה היה לך קל לבחור?'},
+]:[
+  {id:'helpful',text:'עד כמה ההמלצה הייתה מועילה?'},
+  {id:'trust',text:'עד כמה סמכת על ההמלצה?'},
+  {id:'confidence',text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+];}
+
+async function rScenario5(){
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.s5={firstChoice:null,finalChoice:null};
+  renderS5Choose();
+}
+
+function renderS5Choose(){
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card" style="padding:16px 18px 14px">
+    <span class="scenario-badge">תרחיש 5 מתוך 5</span>
+    <h2 style="font-size:17px;margin-bottom:6px">ניסוח הודעה ללקוחות</h2>
+    <div class="bg-text" style="padding:7px 12px;margin-bottom:8px;font-size:13px">בשעות האחרונות יש עיכוב קל בטיפול בחלק מהפניות. כבר התקבלו פניות חוזרות, אבל עדיין לא ברור מה מקור העיכוב.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;padding:8px 10px;background:#f8f9fb;border-radius:10px;font-size:12px;color:var(--text2)">
+      <div>&#x23F1; זמן טיפול עלה ב-18%</div>
+      <div>&#x1F501; פניות חוזרות: עלו</div>
+      <div style="grid-column:1/-1">&#x2705; תקלת מערכת חריגה: לא דווחה</div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text" style="font-size:14px;margin-bottom:12px">&#x1F4CB; איזו הודעה היית שולחת עכשיו ללקוחות?</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:10px 0" id="s5OptionsGrid">
+      ${S5_OPTIONS.map(o=>`
+        <div id="s5mc_${o.id}" onclick="s5SelectOption('${o.id}')" style="background:#fff;border:2px solid var(--border);border-radius:14px;padding:14px 18px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)">
+          <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px">${o.label}</div>
+          <div style="font-size:13px;color:var(--text);line-height:1.7">${o.desc}</div>
+        </div>`).join('')}
+    </div>
+    <div id="s5AfterChoice" style="display:none;margin:10px 0">
+      <div id="s5AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">&#x1F916;</div>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+        </div>
+        <div id="s5AiText"></div>
+      </div>
+      <button class="btn btn-primary" id="s5NextBtn" onclick="s5GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+    </div>
+  </div></div>`;
+}
+
+function s5SelectOption(id){
+  if(ST.s5.firstChoice)return;
+  ST.s5.firstChoice=id;
+  document.querySelectorAll('[id^="s5mc_"]').forEach(c=>{c.style.opacity='0.4';c.style.pointerEvents='none';});
+  const el=document.getElementById('s5mc_'+id);
+  el.style.opacity='1';el.style.border='2px solid var(--primary)';el.style.background='var(--primary-light)';
+  document.getElementById('s5AfterChoice').style.display='block';
+  if(ST.cond==='B'||ST.cond==='C'){
+    document.getElementById('s5AiBubble').style.display='block';
+    document.getElementById('s5AiText').innerHTML='<span style="opacity:.5">מקליד/ה...</span>';
+    setTimeout(()=>{document.getElementById('s5AiText').textContent=ST.cond==='C'?S5_AI_C:S5_AI_B;},1200);
+  }
+  setTimeout(()=>document.getElementById('s5AfterChoice').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+async function s5GoToChat(){
+  if(ST.cond==='A'){s5GoConfirm();return;}
+  renderS5Chat();
+  const r=ST.cond==='C'?(S5_FIRST_C[ST.s5.firstChoice]||S5_FIRST_C.opt1):(S5_FIRST_B[ST.s5.firstChoice]||S5_FIRST_B.opt1);
+  ST.chatHistory.push({role:'assistant',content:r});s5AddMsg('ai',r);
+}
+
+function renderS5Chat(){
+  const sel=S5_OPTIONS.find(x=>x.id===ST.s5.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 5 — שיחה עם המנהל הדיגיטלי</span>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.label}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div class="chat-area" style="display:block">
+      <div class="chat-header"><div class="avatar">&#x1F916;</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
+      <div id="s5qr" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
+        ${S5_QR.map(q=>`<button onclick="s5QuickReply(this,'${q.text}')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer">${q.text}</button>`).join('')}
+      </div>
+      <div class="chat-input"><input type="text" id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')s5SendMsg()"><button id="sendBtn" onclick="s5SendMsg()">שלח</button></div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="s5GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור הודעה אחרת</button>
+      <button class="btn btn-primary" onclick="s5ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+    </div>
+  </div></div>`;
+  s5UpdateRounds();
+}
+
+function s5QuickReply(btn,text){
+  document.getElementById('s5qr').style.display='none';
+  const qr=S5_QR.find(q=>q.text===text);
+  if(qr){s5AddMsg('user',text);ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;s5UpdateRounds();
+    const r=ST.cond==='C'?qr.reply_c:qr.reply_b;
+    ST.chatHistory.push({role:'assistant',content:r});s5AddMsg('ai',r);}
+}
+async function s5SendMsg(){
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  const inp=document.getElementById('chatText');const text=inp?.value?.trim();if(!text)return;
+  inp.value='';ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;
+  s5AddMsg('user',text);s5UpdateRounds();
+  document.getElementById('s5qr')&&(document.getElementById('s5qr').style.display='none');
+  s5ShowTyping();const reply=await s5CallLLM();s5HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s5AddMsg('ai',reply);}
+}
+function s5AddMsg(role,text){const m=document.getElementById('chatMsgs');if(!m)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;m.appendChild(d);m.scrollTop=m.scrollHeight;}
+function s5ShowTyping(){const m=document.getElementById('chatMsgs');if(!m)return;const t=document.createElement('div');t.className='typing';t.id='s5t';t.innerHTML='<span></span><span></span><span></span>';m.appendChild(t);m.scrollTop=m.scrollHeight;}
+function s5HideTyping(){document.getElementById('s5t')?.remove();}
+function s5UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const b=document.getElementById('sendBtn');if(b)b.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const i=document.getElementById('chatText');if(i)i.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
+function s5GoChangeChoice(){ST.s5.firstChoice=null;ST.s5.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS5Choose();}
+function s5ConfirmSame(){ST.s5.finalChoice=ST.s5.firstChoice;s5GoLikert();}
+
+function s5GoConfirm(){
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 5 — בחירה סופית</span>
+    <h2>מה הבחירה הסופית שלך?</h2>
+    <div style="display:flex;flex-direction:column;gap:10px;margin:10px 0">
+      ${S5_OPTIONS.map(o=>`<div onclick="s5SetFinal('${o.id}')" id="s5fc_${o.id}" style="background:#fff;border:2px solid ${ST.s5.firstChoice===o.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:14px 18px;cursor:pointer">
+        <div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px">${o.label}</div>
+        <div style="font-size:13px;color:var(--text)">${o.desc}</div>
+      </div>`).join('')}
+    </div>
+    <div class="error-msg" id="s5err"></div>
+    <button class="btn btn-primary" onclick="s5SubmitFinal()">אשר/י בחירה סופית ←</button>
+  </div></div>`;
+  if(!ST.s5.finalChoice)ST.s5.finalChoice=ST.s5.firstChoice;
+}
+function s5SetFinal(id){ST.s5.finalChoice=id;document.querySelectorAll('[id^="s5fc_"]').forEach(c=>c.style.borderColor='var(--border)');document.getElementById('s5fc_'+id).style.borderColor='var(--success)';}
+function s5SubmitFinal(){if(!ST.s5.finalChoice){document.getElementById('s5err').textContent='נא לבחור.';document.getElementById('s5err').classList.add('show');return;}s5GoLikert();}
+
+function s5GoLikert(){
+  const qs=getS5LikertQ();
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 5 — שאלות סיום</span>
+    <h2>עוד 3 שאלות קצרות</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">1 = בכלל לא &nbsp;·&nbsp; 7 = במידה רבה מאוד</div>
+    ${qs.map((q,i)=>`<div style="margin-bottom:20px"><div class="likert-q">${i+1}. ${q.text}</div>
+      <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="s5lk_${q.id}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+    </div>`).join('')}
+    <div class="error-msg" id="s5lerr"></div>
+    <button class="btn btn-primary" onclick="s5SubmitLikert()">סיום ✓</button>
+  </div></div>`;
+}
+function s5SubmitLikert(){
+  const qs=getS5LikertQ();const vals={};
+  for(const q of qs){const v=document.querySelector(`input[name="s5lk_${q.id}"]:checked`);if(!v){document.getElementById('s5lerr').textContent='נא לענות על כל השאלות.';document.getElementById('s5lerr').classList.add('show');return;}vals[q.id]=+v.value;}
+  ST.R['R5']=vals.confidence||0;ST.C['C5']=vals.helpful||vals.clarity||0;
+  ST.D['D5']=ST.s5.finalChoice||ST.s5.firstChoice;
+  ST.ts['S5']={...ST.ts['S5'],end:Date.now()};ST.tEnd=Date.now();
+  if(ST.chatHistory.length>0){ST.allChatLogs['S5']=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));saveChatLog(4,ST.allChatLogs['S5']);}
+  setTimeout(()=>{ST.phase='manipCheck';go();},200);
+}
+async function s5CallLLM(){
+  if(!CONFIG.APPS_SCRIPT_URL)return null;
+  const msgs=ST.chatHistory.filter(m=>m.role!=='system').slice(-6);
+  const compact={idx:95,cond:ST.cond,msgs,model:CONFIG.MODEL,pid:PARTICIPANT_ID};
+  for(let attempt=0;attempt<2;attempt++){try{
+    const payload=encodeURIComponent(JSON.stringify(compact));
+    const cbName='s5cb_'+Date.now()+'_'+attempt;
+    const result=await new Promise(resolve=>{
+      const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+      window[cbName]=d=>{clearTimeout(timeout);resolve(d.reply||null);cleanup()};
+      function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+      const s=document.createElement('script');
+      s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+      s.onerror=()=>{clearTimeout(timeout);resolve(null);cleanup()};
+      document.body.appendChild(s);
+    });
+    if(result)return result;
+    if(attempt<1)await new Promise(r=>setTimeout(r,2000));
+  }catch(e){}}
+  return 'מצטער/ת, לא הצלחתי להתחבר.';
 }
 
 // ─── Original Scenario (with chat) ─── (scenarios 5)
