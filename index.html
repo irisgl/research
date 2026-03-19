@@ -520,7 +520,26 @@ function saveChatLog(scenarioIdx, chatHistory){
 function buildRow(){
   const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
   let total=0;const sc={};
-  for(let i=0;i<5;i++){const sIdx=i<3?null:(i-3);const s_obj=sIdx!==null?SCENARIOS[sIdx]:null;const d=ST.D[`D${i+1}`]||'',s=d&&s_obj?s_obj.score(d):0;sc[`TaskScore_D${i+1}`]=s;total+=s}
+  // Scoring functions for new scenarios 1-3
+  const NEW_SCORES = {
+    // S1: response_time=10, satisfaction=8, open_tickets/open_issues=4
+    S1: d => ({response_time:10, satisfaction:8, open_tickets:4, open_issues:4}[d]||0),
+    // S2: mia=10, shaked=8, roi/yael=4
+    S2: d => ({mia:10, shaked:8, roi:4, yael:4}[d]||0),
+    // S3: training=10, system=8, analytics=6, bonus=3
+    S3: d => ({training:10, system:8, analytics:6, bonus:3}[d]||0),
+    // S4: check=10, update=7, wait=4, clients=2
+    S4: d => ({check:10, update:7, wait:4, clients:2}[d]||0),
+    // S5: opt1=10, opt2=8, opt3=4, opt4=2
+    S5: d => ({opt1:10, opt2:8, opt3:4, opt4:2}[d]||0),
+  };
+  for(let i=0;i<5;i++){
+    const d=ST.D[`D${i+1}`]||'';
+    let s=0;
+    if(i<3){ s=d?NEW_SCORES[`S${i+1}`](d):0; }
+    else { const sIdx=i-3; const s_obj=SCENARIOS[sIdx]; s=d&&s_obj?s_obj.score(d):0; }
+    sc[`TaskScore_D${i+1}`]=s;total+=s;
+  }
   const urlParam=(new URLSearchParams(location.search).get('condition')||'').toLowerCase();
   const condSource=urlParam==='random'?'random':urlParam?'url':'manual';
   const row={
