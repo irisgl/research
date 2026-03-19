@@ -1946,7 +1946,7 @@ function renderS4Chat(){
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 4 — שיחה עם המנהל הדיגיטלי</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
-      ${S4_ACTIONS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s4.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s4.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
+      ${S4_OPTIONS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s4.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s4.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
         <span style="font-size:22px;display:block">${x.emoji}</span>
         <div style="font-weight:700;color:${x.id===ST.s4.firstChoice?'var(--primary)':'var(--text)'}">${x.label}</div>
       </div>`).join('')}
