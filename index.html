@@ -574,6 +574,14 @@ function go(){window.scrollTo(0,0);({welcome:rWelcome,preDemog:rPreDemog,preATAI
 // ─── Welcome ───
 function rWelcome(){
   const uc=getCond();if(uc)ST.cond=uc;
+  // Skip welcome screen in dev mode
+  if(SKIP_SURVEYS&&ST.cond){
+    ST.survey.consent='yes';
+    ST.t0=Date.now();
+    ST.cur=0;ST.ts.S1={start:Date.now()};ST.phase='scenario';
+    ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+    go();return;
+  }
   app.innerHTML=`<div class="screen"><div class="card" style="text-align:center;padding:40px 32px">
     <div style="font-size:48px;margin-bottom:16px">🏢</div>
     <h1 style="margin-bottom:4px">סימולציית קבלת החלטות ניהוליות</h1>
@@ -922,6 +930,8 @@ async function rScenario(){
     await rScenario1();
   } else if(i===1){
     await rScenario2();
+  } else if(i===2){
+    await rScenario3();
   } else {
     await rScenarioOriginal();
   }
@@ -948,7 +958,7 @@ const S1_SYS = `את/ה מנהל/ת דיגיטלי/ת של צוות שירות. 
 - אסור לדבר על "פניות" כאילו יש תוכן ספציפי שלהן — יש רק מספרים
 - עד 2 משפטים בלבד
 - אל תקבע שיש תשובה נכונה אחת`;
-const S1_LIKERT_Q = ST.cond === 'A' ? [
+function getS1LikertQ(){ return ST.cond === 'A' ? [
   {id:'clarity',    text:'עד כמה ההחלטה הייתה ברורה לך?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
   {id:'ease',       text:'עד כמה היה לך קל לבחור מה לבדוק קודם?'},
@@ -956,7 +966,7 @@ const S1_LIKERT_Q = ST.cond === 'A' ? [
   {id:'helpful',    text:'האם ההמלצה של המנהל הדיגיטלי עזרה לך לקבל החלטה?'},
   {id:'trust',      text:'באיזו מידה הרגשת שהמנהל הדיגיטלי מבין את סדרי העדיפויות בצוות?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
-];
+]; }
 
 async function rScenario1(){
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
@@ -1195,7 +1205,7 @@ function s1SubmitFinal(){
 }
 
 function s1GoLikert(){
-  const questions = S1_LIKERT_Q;
+  const questions = getS1LikertQ();
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 1 — שאלות סיום</span>
     <h2>עוד 3 שאלות קצרות</h2>
@@ -1211,7 +1221,7 @@ function s1GoLikert(){
 }
 
 function s1SubmitLikert(){
-  const questions = S1_LIKERT_Q;
+  const questions = getS1LikertQ();
   const vals={};
   for(const q of questions){
     const v=document.querySelector(`input[name="s1lk_${q.id}"]:checked`);
@@ -1278,7 +1288,7 @@ const S2_FIRST_B = {
   mia:   'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
   shaked:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
 };
-const S2_LIKERT_Q = ST.cond === 'A' ? [
+function getS2LikertQ(){ return ST.cond === 'A' ? [
   {id:'clarity',    text:'עד כמה היה לך ברור במי כדאי להתחיל?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
   {id:'ease',       text:'עד כמה היה לך קל לבחור?'},
@@ -1286,7 +1296,7 @@ const S2_LIKERT_Q = ST.cond === 'A' ? [
   {id:'helpful',    text:'עד כמה ההמלצה הייתה מועילה?'},
   {id:'trust',      text:'עד כמה סמכת על ההמלצה?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
-];
+]; }
 
 async function rScenario2(){
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
@@ -1474,7 +1484,7 @@ function s2SubmitFinal(){
 }
 
 function s2GoLikert(){
-  const questions = S2_LIKERT_Q;
+  const questions = getS2LikertQ();
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 2 — שאלות סיום</span>
     <h2>עוד 3 שאלות קצרות</h2>
@@ -1490,7 +1500,7 @@ function s2GoLikert(){
 }
 
 function s2SubmitLikert(){
-  const questions = S2_LIKERT_Q;
+  const questions = getS2LikertQ();
   const vals={};
   for(const q of questions){
     const v=document.querySelector(`input[name="s2lk_${q.id}"]:checked`);
@@ -1532,7 +1542,247 @@ async function s2CallLLM(){
   return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
 }
 
-// ─── Original Scenario (with chat) ─── (scenarios 3-5)
+
+// ─── Scenario 3: Initiative Investment ───
+const S3_INITIATIVES = [
+  {id:'system',    icon:'💻', name:'שדרוג מערכת העבודה', impact:'גבוהה',         speed:'בינוני', complexity:'בינונית', impactC:'change-green',  speedC:'change-orange', complexC:'change-orange'},
+  {id:'training',  icon:'📚', name:'הדרכה קצרה לצוות',   impact:'בינונית',       speed:'מהיר',   complexity:'נמוכה',   impactC:'change-orange', speedC:'change-green',  complexC:'change-green'},
+  {id:'analytics', icon:'📊', name:'כלי ניתוח נתונים',   impact:'בינונית-גבוהה', speed:'בינוני', complexity:'נמוכה',   impactC:'change-orange', speedC:'change-orange', complexC:'change-green'},
+  {id:'bonus',     icon:'🎁', name:'בונוסים נקודתיים',   impact:'נמוכה-בינונית', speed:'מהיר',   complexity:'נמוכה',   impactC:'change-red',    speedC:'change-green',  complexC:'change-green'},
+];
+const S3_AI_B = 'נראה שכדאי להתחיל בהדרכה קצרה לצוות.';
+const S3_AI_C = 'נראה שכדאי להתחיל בהדרכה קצרה לצוות — במסגרת זמן של חודש, זו היוזמה שהכי סביר שתשפיע מהר על איכות העבודה ועל קצב הביצוע בלי להכביד על היישום.';
+const S3_FIRST_C = {
+  system:   'יש כאן שני כיוונים סבירים: הדרכה קצרה לצוות ושדרוג מערכת העבודה. שדרוג המערכת מציע פוטנציאל גבוה יותר, אבל בדרך כלל נדרש יותר זמן עד שרואים את ההשפעה.',
+  training: 'יש כאן שני כיוונים סבירים: הדרכה קצרה לצוות ושדרוג מערכת העבודה. אני נוטה להדרכה, כי בטווח קצר היא עשויה לייצר שינוי מהיר יותר.',
+  analytics:'יש כאן שני כיוונים סבירים: הדרכה קצרה לצוות ושדרוג מערכת העבודה. כלי הניתוח מועיל, אבל שתי האפשרויות האחרות עשויות להשפיע ישירות יותר על קצב העבודה.',
+  bonus:    'יש כאן שני כיוונים סבירים: הדרכה קצרה לצוות ושדרוג מערכת העבודה. בונוסים עשויים לתת השפעה מהירה, אבל פחות משפיעים על אופן העבודה עצמו לאורך זמן.',
+};
+const S3_FIRST_B = {
+  system:   'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  training: 'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  analytics:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  bonus:    'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+};
+const S3_QUICK_REPLIES = [
+  {text:'למה דווקא הדרכה?',          reply_c:'כי היא יחסית קלה ליישום ויכולה להשפיע מהר יותר בתוך חודש.',                                                               reply_b:'כי היא מתאימה לטווח הזמן הנתון.'},
+  {text:'למה לא שדרוג מערכת?',       reply_c:'זו גם אפשרות טובה, אבל בדרך כלל נדרש יותר זמן עד שרואים את מלוא ההשפעה שלה.',                                           reply_b:'כי יש שיקול שקשור לטווח הזמן.'},
+  {text:'איזו יוזמה פחות דחופה?',    reply_c:'בונוסים נקודתיים נראים פחות דחופים, כי הם עשויים לתת השפעה קצרה ופחות לשפר את אופן העבודה עצמו.',                        reply_b:'אחת מהן נראית פחות קריטית לטווח הקצר.'},
+];
+function getS3LikertQ(){ return ST.cond === 'A' ? [
+  {id:'clarity',    text:'עד כמה היה לך ברור במה כדאי להשקיע קודם?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',       text:'עד כמה היה לך קל לבחור?'},
+] : [
+  {id:'helpful',    text:'עד כמה ההמלצה הייתה מועילה?'},
+  {id:'trust',      text:'עד כמה סמכת על ההמלצה?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+]; }
+
+async function rScenario3(){
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.s3={firstChoice:null, finalChoice:null};
+  renderS3Choose();
+}
+
+function renderS3Choose(){
+  const hasAI = ST.cond==='B'||ST.cond==='C';
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card" style="padding:16px 18px 14px">
+    <span class="scenario-badge">תרחיש 3 מתוך 5</span>
+    <h2 style="font-size:17px;margin-bottom:6px">בחירת יוזמה להשקעה</h2>
+    <div class="bg-text" style="padding:7px 12px;margin-bottom:6px;font-size:13px">יש תקציב מוגבל לשיפור העבודה בחודש הקרוב. ניתן להתחיל ביוזמה אחת בלבד.</div>
+    <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text" style="font-size:14px;margin-bottom:10px">📋 איזו יוזמה היית בוחרת למימון ראשון כדי לייצר שיפור מורגש בחודש הקרוב?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0" id="s3InitiativesGrid">
+      ${S3_INITIATIVES.map(m=>`
+        <div class="metric-card" id="s3mc_${m.id}" onclick="s3SelectInitiative('${m.id}')" style="background:#f8f9fb;border:2px solid var(--border);border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:22px;display:block;margin-bottom:4px">${m.icon}</span>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${m.name}</div>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:3px;display:inline-block" class="${m.impactC}">השפעה: ${m.impact}</div><br>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:3px;display:inline-block" class="${m.speedC}">מהירות: ${m.speed}</div><br>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;display:inline-block" class="${m.complexC}">מורכבות: ${m.complexity}</div>
+        </div>`).join('')}
+    </div>
+    <div id="s3AfterChoice" style="display:none;margin:10px 0">
+      <div id="s3AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+        </div>
+        <div id="s3AiText"></div>
+      </div>
+      <button class="btn btn-primary" id="s3NextBtn" onclick="s3GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+    </div>
+  </div></div>`;
+}
+
+function s3SelectInitiative(id){
+  if(ST.s3.firstChoice) return;
+  ST.s3.firstChoice = id;
+  const sel = S3_INITIATIVES.find(x=>x.id===id);
+  const grid = document.getElementById('s3InitiativesGrid');
+  grid.innerHTML = `<div style="grid-column:1/-1;background:var(--primary-light);border:2px solid var(--primary);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:22px">${sel.icon}</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text)">${sel.name}</div>
+      <div style="font-size:12px;color:var(--text2)">השפעה: ${sel.impact} · מהירות: ${sel.speed} · מורכבות: ${sel.complexity}</div>
+    </div>
+    <span style="margin-right:auto;font-size:12px;color:var(--primary);font-weight:500">✓ בחירה ראשונית</span>
+  </div>`;
+  document.getElementById('s3AfterChoice').style.display='block';
+  if(ST.cond==='B'||ST.cond==='C'){
+    const bubble=document.getElementById('s3AiBubble');
+    bubble.style.display='block';
+    document.getElementById('s3AiText').innerHTML='<span style="opacity:.5">מקליד/ה...</span>';
+    setTimeout(()=>{document.getElementById('s3AiText').textContent=ST.cond==='C'?S3_AI_C:S3_AI_B;},1200);
+  }
+  setTimeout(()=>document.getElementById('s3AfterChoice').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+async function s3GoToChat(){
+  if(ST.cond==='A'){s3GoConfirm();return;}
+  renderS3Chat();
+  const firstReply=ST.cond==='C'?(S3_FIRST_C[ST.s3.firstChoice]||S3_FIRST_C.training):(S3_FIRST_B[ST.s3.firstChoice]||S3_FIRST_B.training);
+  ST.chatHistory.push({role:'assistant',content:firstReply});
+  s3AddMsg('ai',firstReply);
+}
+
+function renderS3Chat(){
+  const sel=S3_INITIATIVES.find(x=>x.id===ST.s3.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 3 — שיחה עם המנהל הדיגיטלי</span>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.icon} ${sel.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div class="chat-area" style="display:block">
+      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
+      <div id="s3quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
+        ${S3_QUICK_REPLIES.map(q=>`<button onclick="s3QuickReply(this,'${q.text}')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer">${q.text}</button>`).join('')}
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')s3SendMsg()">
+        <button id="sendBtn" onclick="s3SendMsg()">שלח</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="s3GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור יוזמה אחרת</button>
+      <button class="btn btn-primary" onclick="s3ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+    </div>
+  </div></div>`;
+  s3UpdateRounds();
+}
+
+function s3QuickReply(btn,text){
+  document.getElementById('s3quickReplies').style.display='none';
+  // Use hardcoded reply for quick replies
+  const qr=S3_QUICK_REPLIES.find(q=>q.text===text);
+  if(qr){
+    s3AddMsg('user',text);
+    ST.chatHistory.push({role:'user',content:text});
+    ST.chatRounds++;
+    s3UpdateRounds();
+    const reply=ST.cond==='C'?qr.reply_c:qr.reply_b;
+    ST.chatHistory.push({role:'assistant',content:reply});
+    s3AddMsg('ai',reply);
+  }
+}
+
+async function s3SendMsg(){
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  const inp=document.getElementById('chatText');
+  const text=inp?.value?.trim();if(!text)return;
+  inp.value='';
+  ST.chatHistory.push({role:'user',content:text});
+  ST.chatRounds++;
+  s3AddMsg('user',text);
+  s3UpdateRounds();
+  document.getElementById('s3quickReplies')?.style&&(document.getElementById('s3quickReplies').style.display='none');
+  s3ShowTyping();
+  const reply=await s3CallLLM();
+  s3HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s3AddMsg('ai',reply);}
+}
+
+function s3AddMsg(role,text){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
+function s3ShowTyping(){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const t=document.createElement('div');t.className='typing';t.id='s3typing';t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;}
+function s3HideTyping(){document.getElementById('s3typing')?.remove();}
+function s3UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
+function s3GoChangeChoice(){ST.s3.firstChoice=null;ST.s3.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS3Choose();}
+function s3ConfirmSame(){ST.s3.finalChoice=ST.s3.firstChoice;s3GoLikert();}
+
+function s3GoConfirm(){
+  const sel=S3_INITIATIVES.find(x=>x.id===ST.s3.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 3 — בחירה סופית</span>
+    <h2>מה הבחירה הסופית שלך?</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">בחירה ראשונית: <strong>${sel.icon} ${sel.name}</strong> — תוכל/י לשנות.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0">
+      ${S3_INITIATIVES.map(x=>`
+        <div onclick="s3SetFinal('${x.id}')" id="s3fc_${x.id}" style="background:#f8f9fb;border:2px solid ${ST.s3.firstChoice===x.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:12px 10px;cursor:pointer;text-align:center">
+          <span style="font-size:22px;display:block;margin-bottom:4px">${x.icon}</span>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${x.name}</div>
+        </div>`).join('')}
+    </div>
+    <div class="error-msg" id="s3ConfirmErr"></div>
+    <button class="btn btn-primary" onclick="s3SubmitFinal()">אשר/י בחירה סופית ←</button>
+  </div></div>`;
+  if(!ST.s3.finalChoice)ST.s3.finalChoice=ST.s3.firstChoice;
+}
+
+function s3SetFinal(id){ST.s3.finalChoice=id;document.querySelectorAll('[id^="s3fc_"]').forEach(c=>c.style.borderColor='var(--border)');document.getElementById('s3fc_'+id).style.borderColor='var(--success)';}
+function s3SubmitFinal(){if(!ST.s3.finalChoice){document.getElementById('s3ConfirmErr').textContent='נא לבחור.';document.getElementById('s3ConfirmErr').classList.add('show');return;}s3GoLikert();}
+
+function s3GoLikert(){
+  const questions=getS3LikertQ();
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 3 — שאלות סיום</span>
+    <h2>עוד 3 שאלות קצרות</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">1 = בכלל לא &nbsp;·&nbsp; 7 = במידה רבה מאוד</div>
+    ${questions.map((q,i)=>`
+      <div style="margin-bottom:20px">
+        <div class="likert-q">${i+1}. ${q.text}</div>
+        <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="s3lk_${q.id}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      </div>`).join('')}
+    <div class="error-msg" id="s3LikertErr"></div>
+    <button class="btn btn-primary" onclick="s3SubmitLikert()">המשך לתרחיש הבא ←</button>
+  </div></div>`;
+}
+
+function s3SubmitLikert(){
+  const questions=getS3LikertQ();const vals={};
+  for(const q of questions){const v=document.querySelector(`input[name="s3lk_${q.id}"]:checked`);if(!v){document.getElementById('s3LikertErr').textContent='נא לענות על כל השאלות.';document.getElementById('s3LikertErr').classList.add('show');return;}vals[q.id]=+v.value;}
+  ST.R['R3']=vals.confidence||0;ST.C['C3']=vals.helpful||vals.clarity||0;
+  ST.D['D3']=ST.s3.finalChoice||ST.s3.firstChoice;
+  ST.ts['S3']={...ST.ts['S3'],end:Date.now()};
+  if(ST.chatHistory.length>0){ST.allChatLogs['S3']=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));saveChatLog(2,ST.allChatLogs['S3']);}
+  setTimeout(()=>{ST.cur=3;ST.ts['S4']={start:Date.now()};ST.phase='scenario';go();},200);
+}
+
+async function s3CallLLM(){
+  if(!CONFIG.APPS_SCRIPT_URL)return null;
+  const msgs=ST.chatHistory.filter(m=>m.role!=='system').slice(-6);
+  const compact={idx:97,cond:ST.cond,msgs,model:CONFIG.MODEL,pid:PARTICIPANT_ID};
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const payload=encodeURIComponent(JSON.stringify(compact));
+      const cbName='s3cb_'+Date.now()+'_'+attempt;
+      const result=await new Promise(resolve=>{
+        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        window[cbName]=d=>{clearTimeout(timeout);resolve(d.reply||null);cleanup()};
+        function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+        const s=document.createElement('script');
+        s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+        s.onerror=()=>{clearTimeout(timeout);resolve(null);cleanup()};
+        document.body.appendChild(s);
+      });
+      if(result)return result;
+      if(attempt<1)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){}
+  }
+  return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
+}
+
+// ─── Original Scenario (with chat) ─── (scenarios 4-5)
 async function rScenarioOriginal(){
   const i=ST.cur, s=SCENARIOS[i];
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
