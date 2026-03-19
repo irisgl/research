@@ -920,6 +920,8 @@ async function rScenario(){
   const i=ST.cur;
   if(i===0){
     await rScenario1();
+  } else if(i===1){
+    await rScenario2();
   } else {
     await rScenarioOriginal();
   }
@@ -1254,7 +1256,283 @@ async function s1CallLLM(){
   return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
 }
 
-// ─── Original Scenario (with chat) ─── (scenarios 2-5)
+
+// ─── Scenario 2: Team Status (new flow) ───
+const S2_MEMBERS = [
+  {id:'roi',   icon:'👨', name:'רועי',  q1:'איכות עבודה גבוהה',       q2:'עומס בינוני',  q3:'קצב טיפול מהיר',       q1c:'change-green',  q2c:'change-orange', q3c:'change-green'},
+  {id:'yael',  icon:'👩', name:'יעל',   q1:'איכות עבודה גבוהה מאוד',  q2:'עומס נמוך',    q3:'קצב טיפול מהיר מאוד',  q1c:'change-green',  q2c:'change-green',  q3c:'change-green'},
+  {id:'mia',   icon:'👩', name:'מיה',   q1:'איכות עבודה טובה',        q2:'עומס גבוה',    q3:'קצב טיפול בינוני',      q1c:'change-green',  q2c:'change-red',    q3c:'change-orange'},
+  {id:'shaked',icon:'👨', name:'שקד',   q1:'איכות עבודה טובה',        q2:'עומס בינוני',  q3:'קצב טיפול איטי',        q1c:'change-green',  q2c:'change-orange', q3c:'change-red'},
+];
+const S2_AI_B = 'נראה שכדאי להתחיל ממיה.';
+const S2_AI_C = 'נראה שכדאי להתחיל ממיה — יש אצלה עומס גבוה לצד ביצועים שעדיין נראים טובים, ולכן בדיקה קצרה יכולה לעזור להבין אם היא צריכה תמיכה לפני שתהיה ירידה נוספת.';
+const S2_FIRST_C = {
+  roi:   'יש כאן שני כיוונים סבירים: מיה ושקד. מיה מאופיינת בעומס גבוה עם ביצועים שעדיין יציבים — שלב טוב להציע תמיכה לפני שתהיה ירידה.',
+  yael:  'יש כאן שני כיוונים סבירים: מיה ושקד. יעל נראית מצוין כרגע — אולי כדאי להתמקד במי שיש שם סימני לחץ.',
+  mia:   'יש כאן שני כיוונים סבירים: מיה ושקד. אני נוטה להתחיל ממיה, כי העומס שלה גבוה ועדיין לא רואים ירידה חדה — בדיוק שלב טוב לבדוק אם נדרשת תמיכה.',
+  shaked:'יש כאן שני כיוונים סבירים: מיה ושקד. שקד מאופיין בקצב טיפול איטי לצד עומס בינוני — כדאי להבין אם יש סיבה.',
+};
+const S2_FIRST_B = {
+  roi:   'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  yael:  'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  mia:   'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  shaked:'יש כאן שני כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+};
+const S2_LIKERT_Q = ST.cond === 'A' ? [
+  {id:'clarity',    text:'עד כמה היה לך ברור במי כדאי להתחיל?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',       text:'עד כמה היה לך קל לבחור?'},
+] : [
+  {id:'helpful',    text:'עד כמה ההמלצה הייתה מועילה?'},
+  {id:'trust',      text:'עד כמה סמכת על ההמלצה?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+];
+
+async function rScenario2(){
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.s2={firstChoice:null, finalChoice:null, chatRounds:0};
+  renderS2Choose();
+}
+
+function renderS2Choose(){
+  const hasAI = ST.cond==='B'||ST.cond==='C';
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card" style="padding:16px 18px 14px">
+    <span class="scenario-badge">תרחיש 2 מתוך 5</span>
+    <h2 style="font-size:17px;margin-bottom:6px">תמונת מצב צוותית</h2>
+    <div class="bg-text" style="padding:7px 12px;margin-bottom:6px;font-size:13px">סוף חודש. פתחת תמונת מצב קצרה של הצוות.</div>
+    <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text" style="font-size:14px;margin-bottom:10px">📋 על מי היית לוחצת קודם כדי להבין איפה כדאי לתת יותר תמיכה ניהולית?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0" id="s2MembersGrid">
+      ${S2_MEMBERS.map(m=>`
+        <div class="metric-card" id="s2mc_${m.id}" onclick="s2SelectMember('${m.id}')" style="background:#f8f9fb;border:2px solid var(--border);border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:22px;display:block;margin-bottom:4px">${m.icon}</span>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px">${m.name}</div>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:3px;display:inline-block" class="${m.q1c}">${m.q1}</div><br>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;margin-bottom:3px;display:inline-block" class="${m.q2c}">${m.q2}</div><br>
+          <div style="font-size:11px;padding:2px 8px;border-radius:12px;display:inline-block" class="${m.q3c}">${m.q3}</div>
+        </div>`).join('')}
+    </div>
+    <div id="s2AfterChoice" style="display:none;margin:10px 0">
+      <div id="s2AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+        </div>
+        <div id="s2AiText"></div>
+      </div>
+      <button class="btn btn-primary" id="s2NextBtn" onclick="s2GoToChat()" style="margin-top:6px">\${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+    </div>
+  </div></div>\`;
+}
+
+function s2SelectMember(id){
+  if(ST.s2.firstChoice) return;
+  ST.s2.firstChoice = id;
+  const selMember = S2_MEMBERS.find(x=>x.id===id);
+  const grid = document.getElementById('s2MembersGrid');
+  grid.innerHTML = `<div style="grid-column:1/-1;background:var(--primary-light);border:2px solid var(--primary);border-radius:12px;padding:10px 16px;display:flex;align-items:center;gap:12px">
+    <span style="font-size:22px">\${selMember.icon}</span>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--text)">\${selMember.name}</div>
+      <div style="font-size:12px;color:var(--text2)">\${selMember.q1} · \${selMember.q2} · \${selMember.q3}</div>
+    </div>
+    <span style="margin-right:auto;font-size:12px;color:var(--primary);font-weight:500">✓ בחירה ראשונית</span>
+  </div>\`;
+  document.getElementById('s2AfterChoice').style.display='block';
+  if(ST.cond==='B'||ST.cond==='C'){
+    const bubble = document.getElementById('s2AiBubble');
+    const aiText = document.getElementById('s2AiText');
+    bubble.style.display='block';
+    aiText.innerHTML='<span style="opacity:.5">מקליד/ה...</span>';
+    setTimeout(()=>{ aiText.textContent = ST.cond==='C' ? S2_AI_C : S2_AI_B; }, 1200);
+  }
+  setTimeout(()=>document.getElementById('s2AfterChoice').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+async function s2GoToChat(){
+  if(ST.cond==='A'){
+    s2GoConfirm();
+    return;
+  }
+  const m = S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
+  renderS2Chat();
+  const firstReply = ST.cond==='C' ? (S2_FIRST_C[ST.s2.firstChoice]||S2_FIRST_C.mia) : (S2_FIRST_B[ST.s2.firstChoice]||S2_FIRST_B.mia);
+  ST.chatHistory.push({role:'assistant', content: firstReply});
+  s2AddMsg('ai', firstReply);
+}
+
+function renderS2Chat(){
+  const m = S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 2 — שיחה עם המנהל הדיגיטלי</span>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>\${m.icon} \${m.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div class="chat-area" style="display:block">
+      <div class="chat-header">
+        <div class="avatar">🤖</div>
+        <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+      </div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="rounds-left" id="roundsLeft">\${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
+      <div id="s2quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
+        <button onclick="s2QuickReply(this,'למה דווקא מיה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה דווקא מיה?</button>
+        <button onclick="s2QuickReply(this,'למה לא להתחיל משקד?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה לא להתחיל משקד?</button>
+        <button onclick="s2QuickReply(this,'מי עוד נראה שדורש פחות תשומת לב כרגע?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">מי עוד דורש פחות תשומת לב?</button>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')s2SendMsg()">
+        <button id="sendBtn" onclick="s2SendMsg()">שלח</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="s2GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור עובד/ת אחר/ת</button>
+      <button class="btn btn-primary" onclick="s2ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+    </div>
+  </div></div>\`;
+  s2UpdateRounds();
+}
+
+function s2QuickReply(btn, text){
+  document.getElementById('s2quickReplies').style.display='none';
+  const inp = document.getElementById('chatText');
+  if(inp) inp.value = text;
+  s2SendMsg();
+}
+
+async function s2SendMsg(){
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  const inp=document.getElementById('chatText');
+  const text=inp?.value?.trim();
+  if(!text)return;
+  inp.value='';
+  ST.chatHistory.push({role:'user',content:text});
+  ST.chatRounds++;
+  s2AddMsg('user',text);
+  s2UpdateRounds();
+  document.getElementById('s2quickReplies')?.style && (document.getElementById('s2quickReplies').style.display='none');
+  s2ShowTyping();
+  const reply=await s2CallLLM();
+  s2HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s2AddMsg('ai',reply);}
+}
+
+function s2AddMsg(role,text){
+  const msgs=document.getElementById('chatMsgs');if(!msgs)return;
+  const d=document.createElement('div');d.className=`msg \${role}`;d.textContent=text;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+}
+function s2ShowTyping(){
+  const msgs=document.getElementById('chatMsgs');if(!msgs)return;
+  const t=document.createElement('div');t.className='typing';t.id='s2typing';
+  t.innerHTML='<span></span><span></span><span></span>';
+  msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;
+}
+function s2HideTyping(){document.getElementById('s2typing')?.remove();}
+function s2UpdateRounds(){
+  const el=document.getElementById('roundsLeft');
+  if(el)el.textContent=`\${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;
+  const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;
+  const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;
+}
+
+function s2GoChangeChoice(){
+  ST.s2.firstChoice=null;ST.s2.finalChoice=null;
+  ST.chatHistory=[];ST.chatRounds=0;
+  renderS2Choose();
+}
+function s2ConfirmSame(){
+  ST.s2.finalChoice=ST.s2.firstChoice;
+  s2GoLikert();
+}
+
+function s2GoConfirm(){
+  const m=S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 2 — בחירה סופית</span>
+    <h2>מה הבחירה הסופית שלך?</h2>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">בחירה ראשונית: <strong>\${m.icon} \${m.name}</strong> — תוכל/י לשנות.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0">
+      \${S2_MEMBERS.map(x=>`
+        <div onclick="s2SetFinal('\${x.id}')" id="s2fc_\${x.id}" style="background:#f8f9fb;border:2px solid \${ST.s2.finalChoice===x.id?'var(--success)':ST.s2.firstChoice===x.id?'var(--primary)':'var(--border)'};border-radius:14px;padding:12px 10px;cursor:pointer;transition:all .2s;text-align:center">
+          <span style="font-size:22px;display:block;margin-bottom:4px">\${x.icon}</span>
+          <div style="font-size:14px;font-weight:700;color:var(--text);\${ST.s2.firstChoice===x.id?'color:var(--primary)':''}">\${x.name}</div>
+        </div>`).join('')}
+    </div>
+    <div class="error-msg" id="s2ConfirmErr"></div>
+    <button class="btn btn-primary" onclick="s2SubmitFinal()">אשר/י בחירה סופית ←</button>
+  </div></div>\`;
+  if(!ST.s2.finalChoice) ST.s2.finalChoice=ST.s2.firstChoice;
+}
+
+function s2SetFinal(id){
+  ST.s2.finalChoice=id;
+  document.querySelectorAll('[id^="s2fc_"]').forEach(c=>c.style.borderColor='var(--border)');
+  document.getElementById('s2fc_'+id).style.borderColor='var(--success)';
+}
+function s2SubmitFinal(){
+  if(!ST.s2.finalChoice){document.getElementById('s2ConfirmErr').textContent='נא לבחור.';document.getElementById('s2ConfirmErr').classList.add('show');return;}
+  s2GoLikert();
+}
+
+function s2GoLikert(){
+  const questions = S2_LIKERT_Q;
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 2 — שאלות סיום</span>
+    <h2>עוד 3 שאלות קצרות</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">1 = בכלל לא &nbsp;·&nbsp; 7 = במידה רבה מאוד</div>
+    \${questions.map((q,i)=>`
+      <div style="margin-bottom:20px">
+        <div class="likert-q">\${i+1}. \${q.text}</div>
+        <div class="likert-scale">\${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="s2lk_\${q.id}" value="\${n}"><span class="lk">\${n}</span></label>`).join('')}</div>
+      </div>`).join('')}
+    <div class="error-msg" id="s2LikertErr"></div>
+    <button class="btn btn-primary" onclick="s2SubmitLikert()">המשך לתרחיש הבא ←</button>
+  </div></div>\`;
+}
+
+function s2SubmitLikert(){
+  const questions = S2_LIKERT_Q;
+  const vals={};
+  for(const q of questions){
+    const v=document.querySelector(`input[name="s2lk_\${q.id}"]:checked`);
+    if(!v){document.getElementById('s2LikertErr').textContent='נא לענות על כל השאלות.';document.getElementById('s2LikertErr').classList.add('show');return;}
+    vals[q.id]=+v.value;
+  }
+  ST.R[`R2`]=vals.confidence||0;
+  ST.C[`C2`]=vals.helpful||vals.clarity||0;
+  ST.D[`D2`]=ST.s2.finalChoice||ST.s2.firstChoice;
+  ST.ts[`S2`]={...ST.ts[`S2`], end:Date.now()};
+  if(ST.chatHistory.length>0){
+    ST.allChatLogs[`S2`]=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));
+    saveChatLog(1, ST.allChatLogs[`S2`]);
+  }
+  setTimeout(()=>{ST.cur=2;ST.ts[`S3`]={start:Date.now()};ST.phase='scenario';go();},200);
+}
+
+async function s2CallLLM(){
+  if(!CONFIG.APPS_SCRIPT_URL)return null;
+  const msgs=ST.chatHistory.filter(m=>m.role!=='system').slice(-6);
+  const compact={idx:98,cond:ST.cond,msgs,model:CONFIG.MODEL,pid:PARTICIPANT_ID};
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const payload=encodeURIComponent(JSON.stringify(compact));
+      const cbName='s2cb_'+Date.now()+'_'+attempt;
+      const result=await new Promise(resolve=>{
+        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        window[cbName]=d=>{clearTimeout(timeout);resolve(d.reply||null);cleanup()};
+        function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+        const s=document.createElement('script');
+        s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+        s.onerror=()=>{clearTimeout(timeout);resolve(null);cleanup()};
+        document.body.appendChild(s);
+      });
+      if(result)return result;
+      if(attempt<1)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){}
+  }
+  return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
+}
+
+// ─── Original Scenario (with chat) ─── (scenarios 3-5)
 async function rScenarioOriginal(){
   const i=ST.cur, s=SCENARIOS[i];
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
