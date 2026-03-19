@@ -446,7 +446,7 @@ async function callLLM(messages){
       const cbName='cb_'+Date.now()+'_'+attempt;
       const result=await new Promise((resolve)=>{
         console.log('LLM attempt '+(attempt+1)+'/3');
-        const timeout=setTimeout(()=>{console.warn('LLM TIMEOUT attempt '+(attempt+1));resolve(null);cleanup()},45000);
+        const timeout=setTimeout(()=>{console.warn('LLM TIMEOUT attempt '+(attempt+1));resolve(null);cleanup()},55000);
         window[cbName]=function(data){
           clearTimeout(timeout);
           if(data.error){console.warn('LLM ERROR:',data.error)}
@@ -2652,6 +2652,17 @@ async function rDone(){
 }
 
 function doCopy(){}
+
+// Warm up Apps Script on load to avoid cold start timeout
+if(CONFIG.APPS_SCRIPT_URL){
+  try{
+    const _ws=document.createElement('script');
+    _ws.src=CONFIG.APPS_SCRIPT_URL+'?callback=_warmup_cb&payload='+encodeURIComponent(JSON.stringify({warmup:1}));
+    window._warmup_cb=function(){delete window._warmup_cb;if(_ws.parentNode)_ws.parentNode.removeChild(_ws);};
+    _ws.onerror=function(){if(_ws.parentNode)_ws.parentNode.removeChild(_ws);};
+    setTimeout(()=>{document.body.appendChild(_ws);},1000);
+  }catch(e){}
+}
 
 // ═══════════════════════════════════════════════════
 go();
