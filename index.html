@@ -329,7 +329,10 @@ const ST = {
   survey:{} // all survey responses
 };
 const SKIP_SURVEYS=new URLSearchParams(location.search).get('skip_surveys')==='1';
-const PARTICIPANT_ID=new URLSearchParams(location.search).get('pid')||'';
+const _sp=new URLSearchParams(location.search);
+const PARTICIPANT_ID=_sp.get('pid')||_sp.get('uid')||'';
+const SURVEY_ID=_sp.get('surveyid')||'';
+const SEKERNET_UID=_sp.get('uid')||'';
 
 // ═══════════════════════════════════════════════════
 // HELPERS
@@ -574,6 +577,12 @@ function go(){window.scrollTo(0,0);({welcome:rWelcome,preDemog:rPreDemog,preATAI
 // ─── Welcome ───
 function rWelcome(){
   const uc=getCond();if(uc)ST.cond=uc;
+  // Auto-start if skip_surveys=1 (condition must be in URL)
+  if(SKIP_SURVEYS && ST.cond){
+    ST.t0=Date.now();ST.cur=0;ST.ts.S1={start:Date.now()};
+    ST.phase='scenario';ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+    go();return;
+  }
   // Skip welcome screen in dev mode
   if(SKIP_SURVEYS&&ST.cond){
     ST.survey.consent='yes';
@@ -2117,10 +2126,15 @@ function submitManipCheck(){
 async function rDone(){
   const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
   const redirectUrl=(()=>{
+    // Sekernet panel redirect takes priority
+    if(SURVEY_ID&&SEKERNET_UID){
+      return `https://panel.sekernet.co.il/?surveyid=${encodeURIComponent(SURVEY_ID)}&uid=${encodeURIComponent(SEKERNET_UID)}&status=1`;
+    }
+    // Otherwise use ?redirect= param with pid appended
     const base=new URLSearchParams(location.search).get('redirect')||'';
-    if(!base||!PARTICIPANT_ID) return base;
+    if(!base) return '';
     const sep=base.includes('?')?'&':'?';
-    return base+sep+'pid='+encodeURIComponent(PARTICIPANT_ID);
+    return base+(PARTICIPANT_ID?sep+'pid='+encodeURIComponent(PARTICIPANT_ID):'');
   })();
   app.innerHTML=`<div class="screen">
     <div class="progress-bar">${[0,1,2,3,4].map(()=>'<div class="progress-step done"></div>').join('')}</div>
