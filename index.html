@@ -1083,7 +1083,14 @@ function renderS1Chat(){
   const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 1 — שיחה עם המנהל הדיגיטלי</span>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${m.icon} ${m.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      ${S1_METRICS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s1.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s1.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
+        <span style="font-size:18px;display:block">${x.icon}</span>
+        <div style="font-weight:${x.id===ST.s1.firstChoice?'700':'500'};color:${x.id===ST.s1.firstChoice?'var(--primary)':'var(--text2)'}">${x.name}</div>
+        <div style="font-weight:700;color:var(--text)">${x.value}</div>
+        <span style="font-size:11px" class="${x.changeClass}">${x.change}</span>
+      </div>`).join('')}
+    </div>
     <div class="chat-area" style="display:block">
       <div class="chat-header">
         <div class="avatar">🤖</div>
@@ -1388,7 +1395,13 @@ function renderS2Chat(){
   const m = S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 2 — שיחה עם המנהל הדיגיטלי</span>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${m.icon} ${m.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      ${S2_MEMBERS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s2.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s2.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
+        <span style="font-size:18px;display:block">${x.icon}</span>
+        <div style="font-weight:700;color:${x.id===ST.s2.firstChoice?'var(--primary)':'var(--text)'}">${x.name}</div>
+        <div style="color:var(--text2);font-size:11px">${x.q2}</div>
+      </div>`).join('')}
+    </div>
     <div class="chat-area" style="display:block">
       <div class="chat-header">
         <div class="avatar">🤖</div>
@@ -1664,7 +1677,13 @@ function renderS3Chat(){
   const sel=S3_INITIATIVES.find(x=>x.id===ST.s3.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 3 — שיחה עם המנהל הדיגיטלי</span>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.icon} ${sel.name}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      ${S3_INITIATIVES.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s3.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s3.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
+        <span style="font-size:18px;display:block">${x.icon}</span>
+        <div style="font-weight:700;color:${x.id===ST.s3.firstChoice?'var(--primary)':'var(--text)'};">${x.name}</div>
+        <div style="color:var(--text2);font-size:11px">השפעה: ${x.impact}</div>
+      </div>`).join('')}
+    </div>
     <div class="chat-area" style="display:block">
       <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
@@ -1907,7 +1926,12 @@ function renderS4Chat(){
   const sel=S4_OPTIONS.find(x=>x.id===ST.s4.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 4 — שיחה עם המנהל הדיגיטלי</span>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.emoji} ${sel.label}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
+      ${S4_ACTIONS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s4.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s4.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
+        <span style="font-size:22px;display:block">${x.emoji}</span>
+        <div style="font-weight:700;color:${x.id===ST.s4.firstChoice?'var(--primary)':'var(--text)'}">${x.label}</div>
+      </div>`).join('')}
+    </div>
     <div class="chat-area" style="display:block">
       <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
@@ -2133,7 +2157,12 @@ function renderS5Chat(){
   const sel=S5_OPTIONS.find(x=>x.id===ST.s5.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש 5 — שיחה עם המנהל הדיגיטלי</span>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.label}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
+      ${S5_OPTIONS.map(x=>`<div style="padding:8px 12px;border-radius:10px;border:2px solid ${x.id===ST.s5.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s5.firstChoice?'var(--primary-light)':'#f8f9fb'};font-size:12px">
+        <span style="font-weight:700;color:${x.id===ST.s5.firstChoice?'var(--primary)':'var(--text2)'};">${x.label}: </span>
+        <span style="color:var(--text)">${x.desc.substring(0,60)}${x.desc.length>60?'...':''}</span>
+      </div>`).join('')}
+    </div>
     <div class="chat-area" style="display:block">
       <div class="chat-header"><div class="avatar">&#x1F916;</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
