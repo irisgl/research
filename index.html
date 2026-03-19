@@ -370,7 +370,7 @@ function normalizeUserForLLM(txt){
 }
 
 function followupStyle(){
-  const s=SCENARIOS[ST.cur];
+  const s=SCENARIOS[ST.cur-3]||SCENARIOS[ST.cur];
   const taskReminder=`\nתזכורת: המשימה היא "${s.task}" — אם המשתתף ענה על חלק מהמשימה (למשל הזכיר אפשרות אחת כשצריך שלוש), שאל "ואיזו עוד?" או "ומה עם השאר?". דחוף להשלמת הבחירה.`;
   if(ST.cond==='B'){
     return [
@@ -396,7 +396,7 @@ function followupStyle(){
 // LLM
 // ═══════════════════════════════════════════════════
 function sysPrompt(idx){
-  const s=SCENARIOS[idx];
+  const s=SCENARIOS[idx-3]||SCENARIOS[idx];
 
   const basePrompt = `את/ה מנהל/ת דיגיטלי/ת ארגוני/ת. אתה מנהל שמדבר בעברית, בטון חם ומקצועי ושיחתי — כמו עמית לעבודה.
 הקשר התרחיש: ${s.llmContext}
@@ -520,7 +520,7 @@ function saveChatLog(scenarioIdx, chatHistory){
 function buildRow(){
   const rawTime=Math.round((ST.tEnd-ST.t0)/1000);
   let total=0;const sc={};
-  for(let i=0;i<5;i++){const d=ST.D[`D${i+1}`]||'',s=d?SCENARIOS[i].score(d):0;sc[`TaskScore_D${i+1}`]=s;total+=s}
+  for(let i=0;i<5;i++){const sIdx=i<3?null:(i-3);const s_obj=sIdx!==null?SCENARIOS[sIdx]:null;const d=ST.D[`D${i+1}`]||'',s=d&&s_obj?s_obj.score(d):0;sc[`TaskScore_D${i+1}`]=s;total+=s}
   const urlParam=(new URLSearchParams(location.search).get('condition')||'').toLowerCase();
   const condSource=urlParam==='random'?'random':urlParam?'url':'manual';
   const row={
@@ -1793,7 +1793,7 @@ async function s3CallLLM(){
 
 // ─── Original Scenario (with chat) ─── (scenarios 4-5)
 async function rScenarioOriginal(){
-  const i=ST.cur, s=SCENARIOS[i];
+  const i=ST.cur, s=SCENARIOS[i-3];  // cur 3,4 → SCENARIOS 0,1
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
 
   const hasAI = ST.cond==='B'||ST.cond==='C';
@@ -1861,7 +1861,7 @@ async function rScenarioOriginal(){
 }
 
 function buildLLMMessages(idx, type, userMsg=''){
-  const s=SCENARIOS[idx];
+  const s=SCENARIOS[idx-3]||SCENARIOS[idx];
   const sys={role:'system',content:sysPrompt(idx)};
   if(type==='initial'){
     const condPrompt = ST.cond==='B'
@@ -1888,7 +1888,7 @@ function handleChatSubmit(){
   const txt=input.value.trim();
   if(!txt)return;
 
-  const i=ST.cur, s=SCENARIOS[i];
+  const i=ST.cur, s=SCENARIOS[i-3]||SCENARIOS[i];
   const hasAI=ST.cond==='B'||ST.cond==='C';
 
   // Try to validate as a choice
