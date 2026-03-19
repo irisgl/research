@@ -941,6 +941,8 @@ async function rScenario(){
     await rScenario2();
   } else if(i===2){
     await rScenario3();
+  } else if(i===3){
+    await rScenario4();
   } else {
     await rScenarioOriginal();
   }
@@ -1791,7 +1793,249 @@ async function s3CallLLM(){
   return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
 }
 
-// ─── Original Scenario (with chat) ─── (scenarios 4-5)
+
+// ─── Scenario 4: First Response to Unclear Situation ───
+const S4_OPTIONS = [
+  {id:'check',   emoji:'🔍', label:'לבדוק צוואר בקבוק', desc:'לבדוק אם יש עיכוב באישורים',    score:10},
+  {id:'update',  emoji:'📢', label:'לעדכן את הצוות',    desc:'לשלוח עדכון קצר לצוות',           score:7},
+  {id:'wait',    emoji:'⏳', label:'להמתין למידע נוסף',  desc:'להמתין לפני שמחליטים על פעולה',  score:4},
+  {id:'clients', emoji:'📞', label:'לעדכן לקוחות',       desc:'לעדכן לקוחות שיש עיכוב',          score:2},
+];
+const S4_AI_B = 'נראה שכדאי להתחיל בבדיקה אם יש צוואר בקבוק באישורים.';
+const S4_AI_C = 'נראה שכדאי להתחיל בבדיקה אם יש צוואר בקבוק באישורים — זה הנתון הבולט ביותר כרגע, והוא יכול להסביר גם את העלייה בפניות החוזרות.';
+const S4_FIRST_C = {
+  check:  'יש כאן כמה כיוונים סבירים. אני נוטה לבדוק את האישורים קודם — 18 בקשות ממתינות זה הנתון הבולט, ועיכוב שם יכול להסביר גם את הפניות החוזרות.',
+  update: 'יש כאן כמה כיוונים סבירים. עדכון לצוות הוא צעד טוב, אבל קודם כדאי להבין מה גורם לעיכוב — אחרת קשה לדעת מה לעדכן.',
+  wait:   'יש כאן כמה כיוונים סבירים. המתנה היא אפשרות, אבל 18 בקשות ממתינות זה נתון שאפשר לבדוק עכשיו בלי לחכות.',
+  clients:'יש כאן כמה כיוונים סבירים. עדכון לקוחות עשוי להיות מוקדם מדי — לפני שיודעים מה הבעיה, קשה לתת מידע מדויק.',
+};
+const S4_FIRST_B = {
+  check:'יש כאן כמה כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  update:'יש כאן כמה כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  wait:'יש כאן כמה כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+  clients:'יש כאן כמה כיוונים סבירים. אני נוטה לאחד מהם על בסיס הנתונים.',
+};
+const S4_QUICK = [
+  {text:'למה דווקא לבדוק את האישורים?', reply_c:'כי 18 בקשות ממתינות זה הנתון הגדול ביותר, ועיכוב שם יכול להסביר את שאר הסימפטומים.', reply_b:'כי זה הנתון הבולט ביותר כרגע.'},
+  {text:'למה לא לשלוח עדכון לצוות קודם?', reply_c:'עדכון לצוות יהיה יעיל יותר אחרי שיודעים מה הבעיה — אחרת קשה לדעת מה לומר.', reply_b:'כי לפעמים כדאי לאסוף מידע לפני שמעדכנים.'},
+  {text:'מתי כדאי להמתין לעוד מידע?', reply_c:'המתנה הגיונית כשאין נתונים כלל — אבל כאן יש נתונים שניתן לבדוק עכשיו.', reply_b:'כשאין מספיק נתונים לפעולה — אבל כאן יש.'},
+];
+const S4_LIKERT_Q = ST.cond === 'A' ? [
+  {id:'clarity',    text:'עד כמה היה לך ברור מה כדאי לעשות קודם?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',       text:'עד כמה היה לך קל לבחור?'},
+] : [
+  {id:'helpful',    text:'עד כמה ההמלצה הייתה מועילה?'},
+  {id:'trust',      text:'עד כמה סמכת על ההמלצה?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+];
+
+async function rScenario4(){
+  ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.s4={firstChoice:null, finalChoice:null};
+  renderS4Choose();
+}
+
+function renderS4Choose(){
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card" style="padding:16px 18px 14px">
+    <span class="scenario-badge">תרחיש 4 מתוך 5</span>
+    <h2 style="font-size:17px;margin-bottom:6px">תגובה ראשונה למצב לא ברור</h2>
+    <div class="bg-text" style="padding:7px 12px;margin-bottom:8px;font-size:13px">בשעות האחרונות יש עיכוב קל בתהליך העבודה והתחילו להגיע פניות חוזרות. עדיין לא ברור מה מקור העיכוב.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;background:#f8f9fb;border-radius:12px;padding:10px 14px;border:1px solid var(--border)">
+      <div style="font-size:13px;color:var(--text2)">⏳ בקשות ממתינות לאישור: <strong style="color:var(--error)">18</strong></div>
+      <div style="font-size:13px;color:var(--text2)">🔁 פניות חוזרות: <strong style="color:var(--warning)">7</strong></div>
+      <div style="font-size:13px;color:var(--text2)">⚠️ תקלות מדווחות: <strong>1</strong></div>
+      <div style="font-size:13px;color:var(--text2)">📄 מסמכים חסרים: <strong>2</strong></div>
+    </div>
+    <p style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px">אין תשובה אחת נכונה — חשוב לנו איך את/ה חושב/ת.</p>
+    <div class="task-text" style="font-size:14px;margin-bottom:12px">📋 מה תהיה הפעולה הראשונה שלך?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0" id="s4OptionsGrid">
+      ${S4_OPTIONS.map(o=>`
+        <div id="s4mc_${o.id}" onclick="s4SelectOption('${o.id}')"
+          style="background:#fff;border:2px solid var(--border);border-radius:16px;padding:20px 14px;cursor:pointer;transition:all .2s;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+          <div style="font-size:42px;margin-bottom:10px;line-height:1">${o.emoji}</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">${o.label}</div>
+          <div style="font-size:11px;color:var(--text2);line-height:1.4">${o.desc}</div>
+        </div>`).join('')}
+    </div>
+    <div id="s4AfterChoice" style="display:none;margin:10px 0">
+      <div id="s4AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+        </div>
+        <div id="s4AiText"></div>
+      </div>
+      <button class="btn btn-primary" id="s4NextBtn" onclick="s4GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+    </div>
+  </div></div>`;
+}
+
+function s4SelectOption(id){
+  if(ST.s4.firstChoice) return;
+  ST.s4.firstChoice = id;
+  const sel = S4_OPTIONS.find(x=>x.id===id);
+  // Highlight selected, dim others
+  S4_OPTIONS.forEach(o=>{
+    const el=document.getElementById('s4mc_'+o.id);
+    if(el){
+      if(o.id===id){el.style.border='2px solid var(--primary)';el.style.background='var(--primary-light)';el.style.transform='scale(1.03)';}
+      else{el.style.opacity='0.4';el.style.pointerEvents='none';}
+    }
+  });
+  document.getElementById('s4AfterChoice').style.display='block';
+  if(ST.cond==='B'||ST.cond==='C'){
+    const bubble=document.getElementById('s4AiBubble');
+    bubble.style.display='block';
+    document.getElementById('s4AiText').innerHTML='<span style="opacity:.5">מקליד/ה...</span>';
+    setTimeout(()=>{document.getElementById('s4AiText').textContent=ST.cond==='C'?S4_AI_C:S4_AI_B;},1200);
+  }
+  setTimeout(()=>document.getElementById('s4AfterChoice').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+async function s4GoToChat(){
+  if(ST.cond==='A'){s4GoConfirm();return;}
+  renderS4Chat();
+  const firstReply=ST.cond==='C'?(S4_FIRST_C[ST.s4.firstChoice]||S4_FIRST_C.check):(S4_FIRST_B[ST.s4.firstChoice]||S4_FIRST_B.check);
+  ST.chatHistory.push({role:'assistant',content:firstReply});
+  s4AddMsg('ai',firstReply);
+}
+
+function renderS4Chat(){
+  const sel=S4_OPTIONS.find(x=>x.id===ST.s4.firstChoice);
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 4 — שיחה עם המנהל הדיגיטלי</span>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:12px">בחירה ראשונית: <strong>${sel.emoji} ${sel.label}</strong> — אפשר לשנות בסוף השיחה.</div>
+    <div class="chat-area" style="display:block">
+      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-messages" id="chatMsgs"></div>
+      <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
+      <div id="s4quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
+        ${S4_QUICK.map(q=>`<button onclick="s4QuickReply(this,'${q.text}')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer">${q.text}</button>`).join('')}
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chatText" placeholder="שאל/י שאלה..." onkeydown="if(event.key==='Enter')s4SendMsg()">
+        <button id="sendBtn" onclick="s4SendMsg()">שלח</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-secondary" onclick="s4GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור פעולה אחרת</button>
+      <button class="btn btn-primary" onclick="s4ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+    </div>
+  </div></div>`;
+  s4UpdateRounds();
+}
+
+function s4QuickReply(btn,text){
+  document.getElementById('s4quickReplies').style.display='none';
+  const qr=S4_QUICK.find(q=>q.text===text);
+  if(qr){
+    s4AddMsg('user',text);ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;s4UpdateRounds();
+    const reply=ST.cond==='C'?qr.reply_c:qr.reply_b;
+    ST.chatHistory.push({role:'assistant',content:reply});s4AddMsg('ai',reply);
+  }
+}
+
+async function s4SendMsg(){
+  if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
+  const inp=document.getElementById('chatText');const text=inp?.value?.trim();if(!text)return;
+  inp.value='';ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;
+  s4AddMsg('user',text);s4UpdateRounds();
+  document.getElementById('s4quickReplies')?.style&&(document.getElementById('s4quickReplies').style.display='none');
+  s4ShowTyping();const reply=await s4CallLLM();s4HideTyping();
+  if(reply){ST.chatHistory.push({role:'assistant',content:reply});s4AddMsg('ai',reply);}
+}
+
+function s4AddMsg(role,text){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
+function s4ShowTyping(){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const t=document.createElement('div');t.className='typing';t.id='s4typing';t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;}
+function s4HideTyping(){document.getElementById('s4typing')?.remove();}
+function s4UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
+function s4GoChangeChoice(){ST.s4.firstChoice=null;ST.s4.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS4Choose();}
+function s4ConfirmSame(){ST.s4.finalChoice=ST.s4.firstChoice;s4GoLikert();}
+
+function s4GoConfirm(){
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 4 — בחירה סופית</span>
+    <h2>מה הבחירה הסופית שלך?</h2>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:16px 0">
+      ${S4_OPTIONS.map(o=>`
+        <div onclick="s4SetFinal('${o.id}')" id="s4fc_${o.id}"
+          style="background:#fff;border:2px solid ${ST.s4.firstChoice===o.id?'var(--primary)':'var(--border)'};border-radius:16px;padding:20px 14px;cursor:pointer;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+          <div style="font-size:36px;margin-bottom:8px">${o.emoji}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${o.label}</div>
+        </div>`).join('')}
+    </div>
+    <div class="error-msg" id="s4ConfirmErr"></div>
+    <button class="btn btn-primary" onclick="s4SubmitFinal()">אשר/י בחירה סופית ←</button>
+  </div></div>`;
+  if(!ST.s4.finalChoice)ST.s4.finalChoice=ST.s4.firstChoice;
+}
+
+function s4SetFinal(id){ST.s4.finalChoice=id;document.querySelectorAll('[id^="s4fc_"]').forEach(c=>c.style.borderColor='var(--border)');document.getElementById('s4fc_'+id).style.borderColor='var(--success)';}
+function s4SubmitFinal(){if(!ST.s4.finalChoice){document.getElementById('s4ConfirmErr').textContent='נא לבחור.';document.getElementById('s4ConfirmErr').classList.add('show');return;}s4GoLikert();}
+
+function getS4LikertQ(){ return ST.cond === 'A' ? [
+  {id:'clarity',    text:'עד כמה היה לך ברור מה כדאי לעשות קודם?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+  {id:'ease',       text:'עד כמה היה לך קל לבחור?'},
+] : [
+  {id:'helpful',    text:'עד כמה ההמלצה הייתה מועילה?'},
+  {id:'trust',      text:'עד כמה סמכת על ההמלצה?'},
+  {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
+]; }
+
+function s4GoLikert(){
+  const questions=getS4LikertQ();
+  app.innerHTML=`<div class="screen">${pBar()}<div class="card">
+    <span class="scenario-badge">תרחיש 4 — שאלות סיום</span>
+    <h2>עוד 3 שאלות קצרות</h2>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:4px">1 = בכלל לא &nbsp;·&nbsp; 7 = במידה רבה מאוד</div>
+    ${questions.map((q,i)=>`
+      <div style="margin-bottom:20px">
+        <div class="likert-q">${i+1}. ${q.text}</div>
+        <div class="likert-scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="s4lk_${q.id}" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+      </div>`).join('')}
+    <div class="error-msg" id="s4LikertErr"></div>
+    <button class="btn btn-primary" onclick="s4SubmitLikert()">המשך לתרחיש הבא ←</button>
+  </div></div>`;
+}
+
+function s4SubmitLikert(){
+  const questions=getS4LikertQ();const vals={};
+  for(const q of questions){const v=document.querySelector(`input[name="s4lk_${q.id}"]:checked`);if(!v){document.getElementById('s4LikertErr').textContent='נא לענות על כל השאלות.';document.getElementById('s4LikertErr').classList.add('show');return;}vals[q.id]=+v.value;}
+  ST.R['R4']=vals.confidence||0;ST.C['C4']=vals.helpful||vals.clarity||0;
+  const sel=S4_OPTIONS.find(x=>x.id===(ST.s4.finalChoice||ST.s4.firstChoice));
+  ST.D['D4']=sel?String(S4_OPTIONS.indexOf(sel)+1):'';
+  ST.ts['S4']={...ST.ts['S4'],end:Date.now()};
+  if(ST.chatHistory.length>0){ST.allChatLogs['S4']=ST.chatHistory.map(m=>({r:m.role==='assistant'?'ai':'user',t:m.content.substring(0,300)}));saveChatLog(3,ST.allChatLogs['S4']);}
+  setTimeout(()=>{ST.cur=4;ST.ts['S5']={start:Date.now()};ST.phase='scenario';go();},200);
+}
+
+async function s4CallLLM(){
+  if(!CONFIG.APPS_SCRIPT_URL)return null;
+  const msgs=ST.chatHistory.filter(m=>m.role!=='system').slice(-6);
+  const compact={idx:96,cond:ST.cond,msgs,model:CONFIG.MODEL,pid:PARTICIPANT_ID};
+  for(let attempt=0;attempt<2;attempt++){
+    try{
+      const payload=encodeURIComponent(JSON.stringify(compact));
+      const cbName='s4cb_'+Date.now()+'_'+attempt;
+      const result=await new Promise(resolve=>{
+        const timeout=setTimeout(()=>{resolve(null);cleanup()},30000);
+        window[cbName]=d=>{clearTimeout(timeout);resolve(d.reply||null);cleanup()};
+        function cleanup(){delete window[cbName];if(s.parentNode)s.parentNode.removeChild(s)}
+        const s=document.createElement('script');
+        s.src=CONFIG.APPS_SCRIPT_URL+'?callback='+cbName+'&payload='+payload;
+        s.onerror=()=>{clearTimeout(timeout);resolve(null);cleanup()};
+        document.body.appendChild(s);
+      });
+      if(result)return result;
+      if(attempt<1)await new Promise(r=>setTimeout(r,2000));
+    }catch(e){}
+  }
+  return 'מצטער/ת, לא הצלחתי להתחבר. נסה/י שוב.';
+}
+
+// ─── Original Scenario (with chat) ─── (scenarios 5)
 async function rScenarioOriginal(){
   const i=ST.cur, s=SCENARIOS[i-3];  // cur 3,4 → SCENARIOS 0,1
   ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
