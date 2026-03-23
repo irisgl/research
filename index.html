@@ -1407,6 +1407,8 @@ const S2_QR = [
    reply_c:'יעל נראית יציבה מאוד — עומס נמוך וקצב גבוה. רועי גם במצב טוב. הם פחות דחופים כרגע.',
    reply_b:'מי שיש לו עומס נמוך וקצב גבוה — הוא כנראה לא זקוק לתמיכה מיידית.'},
 ];
+
+async function s2GoToChat(){
   if(ST.cond==='A'){
     s2GoConfirm();
     return;
@@ -1440,7 +1442,7 @@ function renderS2Chat(){
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
       <div id="s2quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
-        <button onclick="s2QuickReply(this,'למה דווקא מיה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">${ST.cond==="B"?"למה דווקא הבחירה הזו?":"למה דווקא מיה?"}</button>
+        <button onclick="s2QuickReply(this,'למה דווקא מיה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה דווקא מיה?</button>
         <button onclick="s2QuickReply(this,'למה לא להתחיל משקד?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה לא להתחיל משקד?</button>
         <button onclick="s2QuickReply(this,'מי עוד נראה שדורש פחות תשומת לב כרגע?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">מי עוד דורש פחות תשומת לב?</button>
       </div>
