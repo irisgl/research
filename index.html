@@ -1403,6 +1403,9 @@ async function s2GoToChat(){
   }
   const m = S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
   renderS2Chat();
+  // Add context as first user message so LLM knows what was chosen
+  const contextMsg = `בחרתי להתחיל מ${m.name} (${m.q1}, ${m.q2}, ${m.q3}).`;
+  ST.chatHistory.push({role:'user', content: contextMsg});
   const firstReply = ST.cond==='C' ? (S2_FIRST_C[ST.s2.firstChoice]||S2_FIRST_C.mia) : (S2_FIRST_B[ST.s2.firstChoice]||S2_FIRST_B.mia);
   ST.chatHistory.push({role:'assistant', content: firstReply});
   s2AddMsg('ai', firstReply);
