@@ -535,9 +535,7 @@ function buildRow(){
   };
   for(let i=0;i<5;i++){
     const d=ST.D[`D${i+1}`]||'';
-    let s=0;
-    if(i<3){ s=d?NEW_SCORES[`S${i+1}`](d):0; }
-    else { const sIdx=i-3; const s_obj=SCENARIOS[sIdx]; s=d&&s_obj?s_obj.score(d):0; }
+    const s=d?NEW_SCORES[`S${i+1}`](d):0;
     sc[`TaskScore_D${i+1}`]=s;total+=s;
   }
   const urlParam=(new URLSearchParams(location.search).get('condition')||'').toLowerCase();
