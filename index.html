@@ -1396,7 +1396,17 @@ function s2SelectMember(id){
   setTimeout(()=>document.getElementById('s2AfterChoice').scrollIntoView({behavior:'smooth',block:'start'}),100);
 }
 
-async function s2GoToChat(){
+const S2_QR = [
+  {text:'למה דווקא מיה?',
+   reply_c:'מיה מאופיינת בעומס גבוה לצד ביצועים שעדיין יציבים — זה בדיוק השלב שבו תמיכה מוקדמת יכולה למנוע ירידה.',
+   reply_b:'יש כאן מישהו עם עומס גבוה במיוחד — זה מצביע על צורך בתשומת לב לפני שיש ירידה בביצועים.'},
+  {text:'למה לא להתחיל משקד?',
+   reply_c:'שקד מאופיין בקצב איטי, אבל העומס שלו בינוני — אצל מיה העומס גבוה יותר, מה שמגדיל את הסיכון לירידה בביצועים.',
+   reply_b:'קצב איטי הוא סימן, אבל עומס גבוה הוא לרוב אינדיקטור דחוף יותר לצורך בתמיכה.'},
+  {text:'מי עוד דורש פחות תשומת לב?',
+   reply_c:'יעל נראית יציבה מאוד — עומס נמוך וקצב גבוה. רועי גם במצב טוב. הם פחות דחופים כרגע.',
+   reply_b:'מי שיש לו עומס נמוך וקצב גבוה — הוא כנראה לא זקוק לתמיכה מיידית.'},
+];
   if(ST.cond==='A'){
     s2GoConfirm();
     return;
@@ -1430,7 +1440,7 @@ function renderS2Chat(){
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
       <div id="s2quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
-        <button onclick="s2QuickReply(this,'למה דווקא מיה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה דווקא מיה?</button>
+        <button onclick="s2QuickReply(this,'למה דווקא מיה?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">${ST.cond==="B"?"למה דווקא הבחירה הזו?":"למה דווקא מיה?"}</button>
         <button onclick="s2QuickReply(this,'למה לא להתחיל משקד?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">למה לא להתחיל משקד?</button>
         <button onclick="s2QuickReply(this,'מי עוד נראה שדורש פחות תשומת לב כרגע?')" style="padding:7px 14px;font-size:13px;font-family:Rubik,sans-serif;border:1.5px solid var(--primary);border-radius:20px;background:#fff;color:var(--primary);cursor:pointer;transition:all .15s">מי עוד דורש פחות תשומת לב?</button>
       </div>
@@ -1449,9 +1459,16 @@ function renderS2Chat(){
 
 function s2QuickReply(btn, text){
   document.getElementById('s2quickReplies').style.display='none';
-  const inp = document.getElementById('chatText');
-  if(inp) inp.value = text;
-  s2SendMsg();
+  const qr = S2_QR.find(q=>q.text===text);
+  if(qr){
+    s2AddMsg('user',text);
+    ST.chatHistory.push({role:'user',content:text});
+    ST.chatRounds++;
+    s2UpdateRounds();
+    const reply = ST.cond==='C' ? qr.reply_c : qr.reply_b;
+    ST.chatHistory.push({role:'assistant',content:reply});
+    s2AddMsg('ai',reply);
+  }
 }
 
 async function s2SendMsg(){
