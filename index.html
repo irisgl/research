@@ -2591,6 +2591,7 @@ function rLikert2(){rLikert1()}
 
 // ─── Manipulation Check (3 questions after all scenarios) ───
 function rManipCheck(){
+  const isA = ST.cond==='A';
   app.innerHTML=`<div class="screen">
     <div class="progress-bar">${[0,1,2,3,4].map(()=>'<div class="progress-step done"></div>').join('')}</div>
     <div class="card">
@@ -2598,19 +2599,19 @@ function rManipCheck(){
       <p>כמעט סיימנו — עוד 3 שאלות קצרות על החוויה הכללית.</p>
 
       <div style="margin:24px 0">
-        <div class="likert-q">1. עד כמה הרגשת שהמידע שקיבלת היה שקוף ומובן?</div>
+        <div class="likert-q">1. עד כמה הרגשת שהמידע שהוצג בפניך היה שקוף ומובן?</div>
         <div class="likert-scale" id="mc1Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc1" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
 
       <div style="margin:24px 0">
-        <div class="likert-q">2. עד כמה הרגשת שההמלצות שקיבלת היו מנומקות ומוסברות?</div>
+        <div class="likert-q">2. ${isA ? 'עד כמה הרגשת בטוח/ה בהחלטות שקיבלת לאורך הסימולציה?' : 'עד כמה הרגשת שההמלצות שקיבלת היו מנומקות ומוסברות?'}</div>
         <div class="likert-scale" id="mc2Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc2" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
 
       <div style="margin:24px 0">
-        <div class="likert-q">3. עד כמה את/ה סומכ/ת על המנהל הדיגיטלי שליווה אותך?</div>
+        <div class="likert-q">3. ${isA ? 'עד כמה היה לך קל לקבל החלטות ללא סיוע חיצוני?' : 'עד כמה את/ה סומכ/ת על המנהל הדיגיטלי שליווה אותך?'}</div>
         <div class="likert-scale" id="mc3Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc3" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
