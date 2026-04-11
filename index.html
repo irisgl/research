@@ -593,8 +593,8 @@ function go(){window.scrollTo(0,0);({screening:rScreening,welcome:rWelcome,preDe
 
 // ─── Screening ───
 function rScreening(){
-  // If no surveyid — skip screening and go to welcome
-  if(!SURVEY_ID){ST.phase='welcome';go();return;}
+  // Always show screening (skip only in dev mode with skip_surveys)
+  if(SKIP_SURVEYS){ST.phase='welcome';go();return;}
   app.innerHTML=`<div class="screen"><div class="card" style="max-width:580px;margin:0 auto;text-align:center;padding:32px 28px">
     <div style="font-size:40px;margin-bottom:12px">📋</div>
     <h2 style="margin-bottom:6px">כמה שאלות קצרות לפני שנתחיל</h2>
