@@ -2767,11 +2767,6 @@ function rManipCheck(){
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
 
-      <div style="margin:24px 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border)">
-        <div class="likert-q">4. לצורך בקרת איכות — אנא סמן/י את המספר 4.</div>
-        <div class="likert-scale" id="mc4Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="attn" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
-      </div>
-
       <div class="error-msg" id="mcErr"></div>
       <button class="btn btn-primary" onclick="submitManipCheck()">המשך →</button>
     </div></div>`;
@@ -2781,9 +2776,8 @@ function submitManipCheck(){
   const mc1=document.querySelector('input[name="mc1"]:checked');
   const mc2=document.querySelector('input[name="mc2"]:checked');
   const mc3=document.querySelector('input[name="mc3"]:checked');
-  const attn=document.querySelector('input[name="attn"]:checked');
-  if(!mc1||!mc2||!mc3||!attn){$('mcErr').textContent='נא לענות על כל השאלות.';$('mcErr').classList.add('show');return}
-  ST.MC={MC_transparency:+mc1.value, MC_explainability:+mc2.value, MC_trust:+mc3.value, attention_check:+attn.value===4?'pass':'fail'};
+  if(!mc1||!mc2||!mc3){$('mcErr').textContent='נא לענות על כל השאלות.';$('mcErr').classList.add('show');return}
+  ST.MC={MC_transparency:+mc1.value, MC_explainability:+mc2.value, MC_trust:+mc3.value};
   if(SKIP_SURVEYS){ST.phase='done'}else{ST.phase='postPEU'}
   go();
 }
