@@ -589,7 +589,7 @@ function buildRow(){
 // ═══════════════════════════════════════════════════
 // STATE PERSISTENCE (survive page refresh)
 // ═══════════════════════════════════════════════════
-function go(){window.scrollTo(0,0);({screening:rScreening,welcome:rWelcome,preDemog:rPreDemog,preATAI:rPreATAI,preGDMS1:rPreGDMS1,preGDMS2:rPreGDMS2,preGDMS3:rPreGDMS3,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,postPEU:rPostPEU,postPPR:rPostPPR,postTRU:rPostTRU,postCON:rPostCON,postTransp:rPostTransp,postUEQ:rPostUEQ,done:rDone})[ST.phase]?.()}
+function go(){window.scrollTo(0,0);({screening:rScreening,welcome:rWelcome,preDemog:rPreDemog,preATAI:rPreATAI,preGDMS1:rPreGDMS1,preGDMS2:rPreGDMS2,preGDMS3:rPreGDMS3,attnCheck:rAttnCheck,scenario:rScenario,likert1:rLikert1,likert2:rLikert2,manipCheck:rManipCheck,postPEU:rPostPEU,postPPR:rPostPPR,postTRU:rPostTRU,postCON:rPostCON,postTransp:rPostTransp,postUEQ:rPostUEQ,done:rDone})[ST.phase]?.()}
 
 // ─── Screening ───
 function rScreening(){
@@ -618,18 +618,7 @@ function rScreening(){
     </div>
 
     <div style="text-align:right;margin-bottom:20px">
-      <div class="likert-q">3. כיצד היית מדרג/ת את רמת השליטה שלך בעברית (קריאה והבנת טקסטים)?</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
-        ${[['native','שפת אם'],['very_high','גבוהה מאוד'],['good','טובה'],['basic','בסיסית'],['weak','חלשה']].map(([v,l])=>`
-          <label style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;transition:all .2s">
-            <input type="radio" name="sc_heb" value="${v}" style="width:16px;height:16px">
-            <span style="font-size:15px">${l}</span>
-          </label>`).join('')}
-      </div>
-    </div>
-
-    <div style="text-align:right;margin-bottom:20px">
-      <div class="likert-q">4. כיצד היית מדרג/ת את רמת השליטה שלך באנגלית (קריאה והבנת טקסטים)?</div>
+      <div class="likert-q">3. כיצד היית מדרג/ת את רמת השליטה שלך באנגלית (קריאה והבנת טקסטים)?</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
         ${[['native','שפת אם'],['very_high','גבוהה מאוד'],['good','טובה'],['medium','בינונית'],['low','נמוכה']].map(([v,l])=>`
           <label style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;transition:all .2s">
@@ -640,7 +629,7 @@ function rScreening(){
     </div>
 
     <div style="text-align:right;margin-bottom:20px">
-      <div class="likert-q">5. בערך כמה עובדים יש בארגון שבו את/ה עובד/ת?</div>
+      <div class="likert-q">4. בערך כמה עובדים יש בארגון שבו את/ה עובד/ת?</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
         ${[['under10','פחות מ-10 עובדים'],['10to49','10–49 עובדים'],['50to249','50–249 עובדים'],['over250','250 עובדים ומעלה'],['unknown','אינני יודע/ת']].map(([v,l])=>`
           <label style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;transition:all .2s">
@@ -651,7 +640,7 @@ function rScreening(){
     </div>
 
     <div style="text-align:right;margin-bottom:24px">
-      <div class="likert-q">6. באיזה סוג ארגון את/ה עובד/ת בעיקר?</div>
+      <div class="likert-q">5. באיזה סוג ארגון את/ה עובד/ת בעיקר?</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
         ${[['private','חברה פרטית למטרות רווח'],['public','מגזר ציבורי (מדינה / רשויות / חברות ממשלתיות)'],['ngo','עמותה / מלכ"ר'],['other','אחר']].map(([v,l])=>`
           <label style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:10px 14px;border:2px solid var(--border);border-radius:10px;transition:all .2s">
@@ -669,13 +658,12 @@ function rScreening(){
 function submitScreening(){
   const ageVal=document.getElementById('sc_age_input')?.value?.trim();
   const employ=document.querySelector('input[name="sc_employ"]:checked');
-  const heb=document.querySelector('input[name="sc_heb"]:checked');
   const eng=document.querySelector('input[name="sc_eng"]:checked');
   const org=document.querySelector('input[name="sc_org"]:checked');
   const sector=document.querySelector('input[name="sc_sector"]:checked');
   const scErr=document.getElementById('scErr');
 
-  if(!ageVal||!employ||!heb||!eng||!org||!sector){
+  if(!ageVal||!employ||!eng||!org||!sector){
     scErr.textContent='נא לענות על כל השאלות.';scErr.classList.add('show');return;
   }
   const ageNum=parseInt(ageVal);
@@ -687,7 +675,6 @@ function submitScreening(){
   const disqualified =
     ageNum < 18 ||
     employ.value==='none' ||
-    heb.value==='basic' || heb.value==='weak' ||
     eng.value==='medium' || eng.value==='low' ||
     org.value==='under10';
 
@@ -705,7 +692,6 @@ function submitScreening(){
 
   ST.survey.sc_age=ageNum;
   ST.survey.sc_employ=employ.value;
-  ST.survey.sc_heb=heb.value;
   ST.survey.sc_eng=eng.value;
   ST.survey.sc_org=org.value;
   ST.survey.sc_sector=sector.value;
@@ -943,7 +929,7 @@ function rPreGDMS3(){
     ],
     scaleMin:0,scaleMax:5,
     anchorLow:'לא מסכים/ה כלל (0)',anchorHigh:'מסכים/ה מאוד (5)',
-    prefix:'GDMS_C',nextPhase:'scenario',pageNum:4,totalPages:6
+    prefix:'GDMS_C',nextPhase:'attnCheck',pageNum:4,totalPages:6
   });
 }
 
@@ -1069,6 +1055,49 @@ function rPostUEQ(){
     <div class="error-msg" id="survErr" style="direction:rtl;text-align:right"></div>
     <button class="btn btn-primary" onclick="submitSurveyPage('UEQ',8,'done')">סיום ✓</button>
   </div></div>`;
+}
+
+
+// ─── Attention Check (before scenarios) ───
+function rAttnCheck(){
+  app.innerHTML=`<div class="screen"><div class="card" style="max-width:560px;margin:0 auto">
+    <h2>בדיקת עירנות</h2>
+    <p style="font-size:14px;color:var(--text2);margin-bottom:24px">לפני שנתחיל את המשימה — שאלה קצרה אחת לבדיקת עירנות.</p>
+    <div style="margin:24px 0;padding:16px 20px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border)">
+      <div class="likert-q">לצורך בדיקת עירנות — אנא סמן/י את המספר 4.</div>
+      <div class="likert-scale" style="margin-top:12px">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="attn_pre" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
+    </div>
+    <div class="error-msg" id="attnErr"></div>
+    <button class="btn btn-primary" onclick="submitAttnCheck()">המשך →</button>
+  </div></div>`;
+}
+
+function submitAttnCheck(){
+  const attn=document.querySelector('input[name="attn_pre"]:checked');
+  if(!attn){document.getElementById('attnErr').textContent='נא לענות על השאלה.';document.getElementById('attnErr').classList.add('show');return;}
+  ST.survey.attention_check_pre = +attn.value===4?'pass':'fail';
+  if(+attn.value!==4){
+    // Failed attention check — redirect to sekernet with status=3 if from panel, else show message
+    if(SURVEY_ID&&SEKERNET_UID){
+      const url=`https://panel.sekernet.co.il/?surveyid=${encodeURIComponent(SURVEY_ID)}&uid=${encodeURIComponent(SEKERNET_UID)}&status=3`;
+      app.innerHTML=`<div class="screen"><div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">🙏</div>
+        <h2>תודה על ההתעניינות</h2>
+        <p style="margin-top:12px;color:var(--text2)">לצערנו, לא ניתן להמשיך.</p>
+        <p style="font-size:13px;color:var(--text2);margin-top:8px">מועברת/מועבר חזרה...</p>
+      </div></div>`;
+      setTimeout(()=>{window.location.href=url;},1500);
+    } else {
+      app.innerHTML=`<div class="screen"><div class="card" style="text-align:center;padding:40px">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <h2>לא ניתן להמשיך</h2>
+        <p style="margin-top:12px;color:var(--text2)">נא לסמן את המספר הנכון.</p>
+      </div></div>`;
+    }
+    return;
+  }
+  ST.cur=0;ST.ts.S1={start:Date.now()};ST.chatHistory=[];ST.chatRounds=0;ST.choiceMade=false;
+  ST.phase='scenario';go();
 }
 
 // ─── Scenario (with chat) ───
@@ -2744,7 +2773,7 @@ function rManipCheck(){
       </div>
 
       <div class="error-msg" id="mcErr"></div>
-      <button class="btn btn-primary" onclick="submitManipCheck()">סיום ✓</button>
+      <button class="btn btn-primary" onclick="submitManipCheck()">המשך →</button>
     </div></div>`;
 }
 
