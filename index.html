@@ -565,7 +565,7 @@ function buildRow(){
     const sKey=`S${i}`;
     row[`chat_msg_count_S${i}`]=ST.chatMsgCount[sKey]||0;
     const firstMsg=ST.chatFirstMsgTime[sKey];
-    const scenEnd=ST.ts[sKey]&&ST.ts[sKey].end;
+    const scenEnd=(ST.ts[sKey]&&ST.ts[sKey].end)||ST.tEnd;
     row[`chat_time_S${i}`]=firstMsg&&scenEnd?Math.round((scenEnd-firstMsg)/1000):0;
   }
   Object.assign(row,sc);
@@ -1316,6 +1316,11 @@ async function s1SendMsg(){
   ST.chatRounds++;
   s1AddMsg('user',text);
   s1UpdateRounds();
+  // Track chat metrics
+  const _sKey1=`S1`;
+  if(!ST.chatMsgCount[_sKey1])ST.chatMsgCount[_sKey1]=0;
+  ST.chatMsgCount[_sKey1]++;
+  if(!ST.chatFirstMsgTime[_sKey1])ST.chatFirstMsgTime[_sKey1]=Date.now();
   // Hide quick replies after first use
   const qr = document.getElementById('quickReplies');
   if(qr) qr.style.display='none';
@@ -1618,6 +1623,10 @@ function s2QuickReply(btn, text){
     ST.chatHistory.push({role:'user',content:text});
     ST.chatRounds++;
     s2UpdateRounds();
+    const _sqKey2=`S2`;
+    if(!ST.chatMsgCount[_sqKey2])ST.chatMsgCount[_sqKey2]=0;
+    ST.chatMsgCount[_sqKey2]++;
+    if(!ST.chatFirstMsgTime[_sqKey2])ST.chatFirstMsgTime[_sqKey2]=Date.now();
     const reply = ST.cond==='C' ? qr.reply_c : qr.reply_b;
     ST.chatHistory.push({role:'assistant',content:reply});
     s2AddMsg('ai',reply);
@@ -1634,6 +1643,11 @@ async function s2SendMsg(){
   ST.chatRounds++;
   s2AddMsg('user',text);
   s2UpdateRounds();
+  // Track chat metrics
+  const _sKey2=`S2`;
+  if(!ST.chatMsgCount[_sKey2])ST.chatMsgCount[_sKey2]=0;
+  ST.chatMsgCount[_sKey2]++;
+  if(!ST.chatFirstMsgTime[_sKey2])ST.chatFirstMsgTime[_sKey2]=Date.now();
   document.getElementById('s2quickReplies')?.style && (document.getElementById('s2quickReplies').style.display='none');
   s2ShowTyping();
   const reply=await s2CallLLM();
@@ -1905,6 +1919,10 @@ function s3QuickReply(btn,text){
     ST.chatHistory.push({role:'user',content:text});
     ST.chatRounds++;
     s3UpdateRounds();
+    const _sqKey3=`S3`;
+    if(!ST.chatMsgCount[_sqKey3])ST.chatMsgCount[_sqKey3]=0;
+    ST.chatMsgCount[_sqKey3]++;
+    if(!ST.chatFirstMsgTime[_sqKey3])ST.chatFirstMsgTime[_sqKey3]=Date.now();
     const reply=ST.cond==='C'?qr.reply_c:qr.reply_b;
     ST.chatHistory.push({role:'assistant',content:reply});
     s3AddMsg('ai',reply);
@@ -1920,6 +1938,11 @@ async function s3SendMsg(){
   ST.chatRounds++;
   s3AddMsg('user',text);
   s3UpdateRounds();
+  // Track chat metrics
+  const _sKey3=`S3`;
+  if(!ST.chatMsgCount[_sKey3])ST.chatMsgCount[_sKey3]=0;
+  ST.chatMsgCount[_sKey3]++;
+  if(!ST.chatFirstMsgTime[_sKey3])ST.chatFirstMsgTime[_sKey3]=Date.now();
   document.getElementById('s3quickReplies')?.style&&(document.getElementById('s3quickReplies').style.display='none');
   s3ShowTyping();
   const reply=await s3CallLLM();
@@ -2158,6 +2181,8 @@ async function s4SendMsg(){
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
   const inp=document.getElementById('chatText');const text=inp?.value?.trim();if(!text)return;
   inp.value='';ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;
+  if(!ST.chatMsgCount['S4'])ST.chatMsgCount['S4']=0;ST.chatMsgCount['S4']++;
+  if(!ST.chatFirstMsgTime['S4'])ST.chatFirstMsgTime['S4']=Date.now();
   s4AddMsg('user',text);s4UpdateRounds();
   document.getElementById('s4quickReplies')?.style&&(document.getElementById('s4quickReplies').style.display='none');
   s4ShowTyping();const reply=await s4CallLLM();s4HideTyping();
@@ -2382,6 +2407,8 @@ async function s5SendMsg(){
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
   const inp=document.getElementById('chatText');const text=inp?.value?.trim();if(!text)return;
   inp.value='';ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;
+  if(!ST.chatMsgCount['S5'])ST.chatMsgCount['S5']=0;ST.chatMsgCount['S5']++;
+  if(!ST.chatFirstMsgTime['S5'])ST.chatFirstMsgTime['S5']=Date.now();
   s5AddMsg('user',text);s5UpdateRounds();
   document.getElementById('s5qr')&&(document.getElementById('s5qr').style.display='none');
   s5ShowTyping();const reply=await s5CallLLM();s5HideTyping();
