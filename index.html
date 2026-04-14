@@ -730,8 +730,8 @@ function rWelcome(){
     </div>
 
     <div style="text-align:right;max-width:560px;margin:20px auto 0">
-      <p style="font-size:14px;color:var(--text);margin-bottom:8px"><b>התפקיד שלך:</b> את/ה מנהל/ת צוות שירות לקוחות. בכל תרחיש תצטרך/י לקבל החלטה ניהולית. המנהל/ת הישיר/ה שלך — מנהל/ת דיגיטלי/ת — ילווה אותך. תוכל/י להתייעץ, לשאול שאלות, ולקבל סיוע לפני שתחליט/י.</p>
-      <p style="color:var(--error);font-size:13px;background:var(--error-bg);padding:10px 14px;border-radius:8px;margin-top:8px">⚠️ שים/י לב: המנהל הדיגיטלי מבוסס על בינה מלאכותית ועשוי לטעות. ההמלצות שלו הן כלי עזר בלבד — ההחלטה הסופית תמיד שלך.</p>
+      <p style="font-size:14px;color:var(--text);margin-bottom:8px"><b>התפקיד שלך:</b> את/ה מנהל/ת צוות שירות לקוחות. בכל תרחיש תצטרך/י לקבל החלטה ניהולית. המנהלת הדיגיטלית שלך — דנה — תלווה אותך. תוכל/י להתייעץ איתה, לשאול שאלות ולקבל סיוע לפני שתחליט/י.</p>
+      <p style="color:var(--error);font-size:13px;background:var(--error-bg);padding:10px 14px;border-radius:8px;margin-top:8px">⚠️ שים/י לב: דנה מבוססת על בינה מלאכותית ועשויה לטעות. ההמלצות שלה הן כלי עזר בלבד — ההחלטה הסופית תמיד שלך.</p>
     </div>
 
     <div style="max-width:560px;margin:20px auto 0;display:flex;gap:12px;justify-content:center">
@@ -937,7 +937,7 @@ function rPreGDMS3(){
 function rPostPEU(){
   renderSurveyPage({
     title:'קלות שימוש נתפסת',
-    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי המנהל הדיגיטלי.',
+    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי דנה.',
     items:[
       'PEU1: My interaction with the digital manager is clear and understandable.',
       'PEU2: Interacting with the digital manager does not require a lot of mental effort.',
@@ -991,7 +991,7 @@ function rPostTRU(){
 function rPostCON(){
   renderSurveyPage({
     title:'אישוש ציפיות',
-    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי המנהל הדיגיטלי.',
+    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי דנה.',
     items:[
       'CON1: My experience with this digital manager was greater than my expectations.',
       'CON2: The service level provided by this digital manager was greater than what I expected.',
@@ -1007,7 +1007,7 @@ function rPostCON(){
 function rPostTransp(){
   renderSurveyPage({
     title:'שקיפות נתפסת',
-    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי המנהל הדיגיטלי.',
+    subtitle:'דרג/י עד כמה את/ה מסכים/ה עם כל היגד לגבי דנה.',
     items:[
       'IN1: It was clear to me what kind of data the system uses to generate recommendations.',
       'IN2: I understood what data was used by the system to infer my preferences.',
@@ -1043,7 +1043,7 @@ function rPostUEQ(){
   const scaleRange=[0,1,2,3,4,5,6,7];
   app.innerHTML=`<div class="screen"><div class="card" style="max-width:700px;margin:0 auto;direction:ltr;text-align:left">
     <h2>חוויית משתמש</h2>
-    <p style="margin-bottom:20px;font-size:14px;color:var(--text2)">דרג/י את החוויה שלך עם המנהל הדיגיטלי בכל מימד.</p>
+    <p style="margin-bottom:20px;font-size:14px;color:var(--text2)">דרג/י את החוויה שלך עם דנה בכל מימד.</p>
     <div style="font-size:13px;color:var(--text2);margin-bottom:8px">עמוד 6 מתוך 6</div>
     ${pairs.map((p,idx)=>`
       <div style="margin-bottom:16px;padding:14px 16px;background:#f8f9fb;border-radius:10px;border:1px solid var(--border)">
@@ -1144,8 +1144,8 @@ function getS1LikertQ(){ return ST.cond === 'A' ? [
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
   {id:'ease',       text:'עד כמה היה לך קל לבחור מה לבדוק קודם?'},
 ] : [
-  {id:'helpful',    text:'האם ההמלצה של המנהל הדיגיטלי עזרה לך לקבל החלטה?'},
-  {id:'trust',      text:'באיזו מידה הרגשת שהמנהל הדיגיטלי מבין את סדרי העדיפויות בצוות?'},
+  {id:'helpful',    text:'האם ההמלצה של דנה עזרה לך לקבל החלטה?'},
+  {id:'trust',      text:'באיזו מידה הרגשת שדנה מבינה את סדרי העדיפויות בצוות?'},
   {id:'confidence', text:'עד כמה הרגשת בטוח/ה בהחלטה הסופית שלך?'},
 ]; }
 
@@ -1176,11 +1176,11 @@ function renderS1Choose(){
       <div id="s1AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:14px 18px;margin-bottom:12px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
-          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">דנה</span>
         </div>
         <div id="s1AiText"></div>
       </div>
-      <button class="btn btn-primary" id="s1NextBtn" onclick="s1GoToChat()">המשך לשיחה עם המנהל הדיגיטלי ←</button>
+      <button class="btn btn-primary" id="s1NextBtn" onclick="s1GoToChat()">המשך לשיחה עם דנה ←</button>
     </div>
   </div></div>`;
 }
@@ -1211,8 +1211,8 @@ function s1SelectMetric(id){
     setTimeout(()=>{
       const el=document.getElementById('s1AiText');if(el)el.textContent = ST.cond==='C' ? S1_AI_C : S1_AI_B;
     }, 1200);
-    const h1=document.getElementById('s1ChangeHint');if(h1)h1.textContent='בחירה ראשונית — אפשר לשנות אחרי השיחה עם המנהל הדיגיטלי.';
-    const nb1=document.getElementById('s1NextBtn');if(nb1)nb1.textContent='המשך לשיחה עם המנהל הדיגיטלי ←';
+    const h1=document.getElementById('s1ChangeHint');if(h1)h1.textContent='בחירה ראשונית — אפשר לשנות אחרי השיחה עם דנה.';
+    const nb1=document.getElementById('s1NextBtn');if(nb1)nb1.textContent='המשך לשיחה עם דנה ←';
   } else {
     const h2=document.getElementById('s1ChangeHint');if(h2)h2.textContent='בחירה ראשונית — תוכל/י לשנות לפני האישור הסופי.';
     const nb2=document.getElementById('s1NextBtn');if(nb2)nb2.textContent='המשך לאישור סופי ←';
@@ -1250,7 +1250,7 @@ async function s1GoToChat(){
 function renderS1Chat(){
   const m = S1_METRICS.find(x=>x.id===ST.s1.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש 1 — שיחה עם המנהל הדיגיטלי</span>
+    <span class="scenario-badge">תרחיש 1 — שיחה עם דנה</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       ${S1_METRICS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s1.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s1.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
         <span style="font-size:18px;display:block">${x.icon}</span>
@@ -1262,7 +1262,7 @@ function renderS1Chat(){
     <div class="chat-area" style="display:block">
       <div class="chat-header">
         <div class="avatar">🤖</div>
-        <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+        <div><div class="name">דנה — המנהלת הדיגיטלית שלך</div><div class="status">מקוון</div></div>
       </div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
@@ -1278,8 +1278,9 @@ function renderS1Chat(){
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="s1GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור מדד אחר</button>
-      <button class="btn btn-primary" onclick="s1ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+      <button class="btn btn-primary" id="s1ConfirmBtn" onclick="s1ConfirmSame()" style="flex:1;min-width:180px;margin-top:0;display:none">המשך עם הבחירה הזו ←</button>
     </div>
+    <div id="s1HintMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px">💬 שאל/י את דנה שאלה, או בחר/י אחת מהשאלות המוצעות</div>
   </div></div>`;
   s1UpdateRounds();
 }
@@ -1297,13 +1298,15 @@ async function s1SendFirst(instructions){
 }
 
 function s1QuickReply(btn, text){
-  // Hide quick replies after use
   const qr = document.getElementById('quickReplies');
   if(qr) qr.style.display='none';
-  // Put text in input and send
   const inp = document.getElementById('chatText');
   if(inp) inp.value = text;
   s1SendMsg();
+  const confirmBtn=document.getElementById('s1ConfirmBtn');
+  const hintMsg=document.getElementById('s1HintMsg');
+  if(confirmBtn)confirmBtn.style.display='block';
+  if(hintMsg)hintMsg.style.display='none';
 }
 
 async function s1SendMsg(){
@@ -1324,6 +1327,8 @@ async function s1SendMsg(){
   // Hide quick replies after first use
   const qr = document.getElementById('quickReplies');
   if(qr) qr.style.display='none';
+  const s1cb=document.getElementById('s1ConfirmBtn');const s1hm=document.getElementById('s1HintMsg');
+  if(s1cb)s1cb.style.display='block';if(s1hm)s1hm.style.display='none';
   s1ShowTyping();
   const reply=await s1CallLLM();
   s1HideTyping();
@@ -1519,11 +1524,11 @@ function renderS2Choose(){
       <div id="s2AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
-          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">דנה</span>
         </div>
         <div id="s2AiText"></div>
       </div>
-      <button class="btn btn-primary" id="s2NextBtn" onclick="s2GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+      <button class="btn btn-primary" id="s2NextBtn" onclick="s2GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם דנה ←'}</button>
     </div>
   </div></div>`;
 }
@@ -1582,7 +1587,7 @@ async function s2GoToChat(){
 function renderS2Chat(){
   const m = S2_MEMBERS.find(x=>x.id===ST.s2.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש 2 — שיחה עם המנהל הדיגיטלי</span>
+    <span class="scenario-badge">תרחיש 2 — שיחה עם דנה</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       ${S2_MEMBERS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s2.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s2.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
         <span style="font-size:18px;display:block">${x.icon}</span>
@@ -1593,7 +1598,7 @@ function renderS2Chat(){
     <div class="chat-area" style="display:block">
       <div class="chat-header">
         <div class="avatar">🤖</div>
-        <div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div>
+        <div><div class="name">דנה — המנהלת הדיגיטלית שלך</div><div class="status">מקוון</div></div>
       </div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS - ST.chatRounds} שאלות נותרו</div>
@@ -1609,8 +1614,9 @@ function renderS2Chat(){
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="s2GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור עובד/ת אחר/ת</button>
-      <button class="btn btn-primary" onclick="s2ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+      <button class="btn btn-primary" id="s2ConfirmBtn" onclick="s2ConfirmSame()" style="flex:1;min-width:180px;margin-top:0;display:none">המשך עם הבחירה הזו ←</button>
     </div>
+    <div id="s2HintMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px">💬 שאל/י את דנה שאלה, או בחר/י אחת מהשאלות המוצעות</div>
   </div></div>`;
   s2UpdateRounds();
 }
@@ -1631,6 +1637,10 @@ function s2QuickReply(btn, text){
     ST.chatHistory.push({role:'assistant',content:reply});
     s2AddMsg('ai',reply);
   }
+  const confirmBtn=document.getElementById('s2ConfirmBtn');
+  const hintMsg=document.getElementById('s2HintMsg');
+  if(confirmBtn)confirmBtn.style.display='block';
+  if(hintMsg)hintMsg.style.display='none';
 }
 
 async function s2SendMsg(){
@@ -1649,6 +1659,8 @@ async function s2SendMsg(){
   ST.chatMsgCount[_sKey2]++;
   if(!ST.chatFirstMsgTime[_sKey2])ST.chatFirstMsgTime[_sKey2]=Date.now();
   document.getElementById('s2quickReplies')?.style && (document.getElementById('s2quickReplies').style.display='none');
+  const s2cb=document.getElementById('s2ConfirmBtn');const s2hm=document.getElementById('s2HintMsg');
+  if(s2cb)s2cb.style.display='block';if(s2hm)s2hm.style.display='none';
   s2ShowTyping();
   const reply=await s2CallLLM();
   s2HideTyping();
@@ -1839,11 +1851,11 @@ function renderS3Choose(){
       <div id="s3AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
-          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">דנה</span>
         </div>
         <div id="s3AiText"></div>
       </div>
-      <button class="btn btn-primary" id="s3NextBtn" onclick="s3GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+      <button class="btn btn-primary" id="s3NextBtn" onclick="s3GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם דנה ←'}</button>
     </div>
   </div></div>`;
 }
@@ -1882,7 +1894,7 @@ async function s3GoToChat(){
 function renderS3Chat(){
   const sel=S3_INITIATIVES.find(x=>x.id===ST.s3.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש 3 — שיחה עם המנהל הדיגיטלי</span>
+    <span class="scenario-badge">תרחיש 3 — שיחה עם דנה</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       ${S3_INITIATIVES.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s3.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s3.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
         <span style="font-size:18px;display:block">${x.icon}</span>
@@ -1891,7 +1903,7 @@ function renderS3Chat(){
       </div>`).join('')}
     </div>
     <div class="chat-area" style="display:block">
-      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">דנה — המנהלת הדיגיטלית שלך</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
       <div id="s3quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
@@ -1904,15 +1916,15 @@ function renderS3Chat(){
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="s3GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור יוזמה אחרת</button>
-      <button class="btn btn-primary" onclick="s3ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+      <button class="btn btn-primary" id="s3ConfirmBtn" onclick="s3ConfirmSame()" style="flex:1;min-width:180px;margin-top:0;display:none">המשך עם הבחירה הזו ←</button>
     </div>
+    <div id="s3HintMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px">💬 שאל/י את דנה שאלה, או בחר/י אחת מהשאלות המוצעות</div>
   </div></div>`;
   s3UpdateRounds();
 }
 
 function s3QuickReply(btn,text){
   document.getElementById('s3quickReplies').style.display='none';
-  // Use hardcoded reply for quick replies
   const qr=S3_QUICK_REPLIES.find(q=>q.text===text);
   if(qr){
     s3AddMsg('user',text);
@@ -1927,6 +1939,10 @@ function s3QuickReply(btn,text){
     ST.chatHistory.push({role:'assistant',content:reply});
     s3AddMsg('ai',reply);
   }
+  const confirmBtn=document.getElementById('s3ConfirmBtn');
+  const hintMsg=document.getElementById('s3HintMsg');
+  if(confirmBtn)confirmBtn.style.display='block';
+  if(hintMsg)hintMsg.style.display='none';
 }
 
 async function s3SendMsg(){
@@ -1944,6 +1960,8 @@ async function s3SendMsg(){
   ST.chatMsgCount[_sKey3]++;
   if(!ST.chatFirstMsgTime[_sKey3])ST.chatFirstMsgTime[_sKey3]=Date.now();
   document.getElementById('s3quickReplies')?.style&&(document.getElementById('s3quickReplies').style.display='none');
+  const s3cb=document.getElementById('s3ConfirmBtn');const s3hm=document.getElementById('s3HintMsg');
+  if(s3cb)s3cb.style.display='block';if(s3hm)s3hm.style.display='none';
   s3ShowTyping();
   const reply=await s3CallLLM();
   s3HideTyping();
@@ -2098,11 +2116,11 @@ function renderS4Choose(){
       <div id="s4AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">🤖</div>
-          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">דנה</span>
         </div>
         <div id="s4AiText"></div>
       </div>
-      <button class="btn btn-primary" id="s4NextBtn" onclick="s4GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+      <button class="btn btn-primary" id="s4NextBtn" onclick="s4GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם דנה ←'}</button>
     </div>
   </div></div>`;
 }
@@ -2140,7 +2158,7 @@ async function s4GoToChat(){
 function renderS4Chat(){
   const sel=S4_OPTIONS.find(x=>x.id===ST.s4.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש 4 — שיחה עם המנהל הדיגיטלי</span>
+    <span class="scenario-badge">תרחיש 4 — שיחה עם דנה</span>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px">
       ${S4_OPTIONS.map(x=>`<div style="padding:8px 10px;border-radius:10px;border:2px solid ${x.id===ST.s4.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s4.firstChoice?'var(--primary-light)':'#f8f9fb'};text-align:center;font-size:12px">
         <span style="font-size:22px;display:block">${x.emoji}</span>
@@ -2148,7 +2166,7 @@ function renderS4Chat(){
       </div>`).join('')}
     </div>
     <div class="chat-area" style="display:block">
-      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-header"><div class="avatar">🤖</div><div><div class="name">דנה — המנהלת הדיגיטלית שלך</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
       <div id="s4quickReplies" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
@@ -2161,8 +2179,9 @@ function renderS4Chat(){
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="s4GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור פעולה אחרת</button>
-      <button class="btn btn-primary" onclick="s4ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+      <button class="btn btn-primary" id="s4ConfirmBtn" onclick="s4ConfirmSame()" style="flex:1;min-width:180px;margin-top:0;display:none">המשך עם הבחירה הזו ←</button>
     </div>
+    <div id="s4HintMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px">💬 שאל/י את דנה שאלה, או בחר/י אחת מהשאלות המוצעות</div>
   </div></div>`;
   s4UpdateRounds();
 }
@@ -2175,6 +2194,10 @@ function s4QuickReply(btn,text){
     const reply=ST.cond==='C'?qr.reply_c:qr.reply_b;
     ST.chatHistory.push({role:'assistant',content:reply});s4AddMsg('ai',reply);
   }
+  const confirmBtn=document.getElementById('s4ConfirmBtn');
+  const hintMsg=document.getElementById('s4HintMsg');
+  if(confirmBtn)confirmBtn.style.display='block';
+  if(hintMsg)hintMsg.style.display='none';
 }
 
 async function s4SendMsg(){
@@ -2185,6 +2208,8 @@ async function s4SendMsg(){
   if(!ST.chatFirstMsgTime['S4'])ST.chatFirstMsgTime['S4']=Date.now();
   s4AddMsg('user',text);s4UpdateRounds();
   document.getElementById('s4quickReplies')?.style&&(document.getElementById('s4quickReplies').style.display='none');
+  const s4cb=document.getElementById('s4ConfirmBtn');const s4hm=document.getElementById('s4HintMsg');
+  if(s4cb)s4cb.style.display='block';if(s4hm)s4hm.style.display='none';
   s4ShowTyping();const reply=await s4CallLLM();s4HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s4AddMsg('ai',reply);}
 }
@@ -2338,11 +2363,11 @@ function renderS5Choose(){
       <div id="s5AiBubble" style="display:none;background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:16px;border-top-right-radius:4px;padding:12px 16px;margin-bottom:10px;font-size:14px;line-height:1.8;animation:msgIn .3s ease-out">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
           <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff">&#x1F916;</div>
-          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">המנהל הדיגיטלי</span>
+          <span style="font-weight:600;font-size:12px;color:var(--primary-dark)">דנה</span>
         </div>
         <div id="s5AiText"></div>
       </div>
-      <button class="btn btn-primary" id="s5NextBtn" onclick="s5GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם המנהל הדיגיטלי ←'}</button>
+      <button class="btn btn-primary" id="s5NextBtn" onclick="s5GoToChat()" style="margin-top:6px">${ST.cond==='A'?'המשך לבחירה סופית ←':'המשך לשיחה עם דנה ←'}</button>
     </div>
   </div></div>`;
 }
@@ -2372,7 +2397,7 @@ async function s5GoToChat(){
 function renderS5Chat(){
   const sel=S5_OPTIONS.find(x=>x.id===ST.s5.firstChoice);
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
-    <span class="scenario-badge">תרחיש 5 — שיחה עם המנהל הדיגיטלי</span>
+    <span class="scenario-badge">תרחיש 5 — שיחה עם דנה</span>
     <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">
       ${S5_OPTIONS.map(x=>`<div style="padding:8px 12px;border-radius:10px;border:2px solid ${x.id===ST.s5.firstChoice?'var(--primary)':'var(--border)'};background:${x.id===ST.s5.firstChoice?'var(--primary-light)':'#f8f9fb'};font-size:12px">
         <span style="font-weight:700;color:${x.id===ST.s5.firstChoice?'var(--primary)':'var(--text2)'};">${x.label}: </span>
@@ -2380,7 +2405,7 @@ function renderS5Chat(){
       </div>`).join('')}
     </div>
     <div class="chat-area" style="display:block">
-      <div class="chat-header"><div class="avatar">&#x1F916;</div><div><div class="name">המנהל הדיגיטלי</div><div class="status">מקוון</div></div></div>
+      <div class="chat-header"><div class="avatar">&#x1F916;</div><div><div class="name">דנה — המנהלת הדיגיטלית שלך</div><div class="status">מקוון</div></div></div>
       <div class="chat-messages" id="chatMsgs"></div>
       <div class="rounds-left" id="roundsLeft">${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו</div>
       <div id="s5qr" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--border);background:#f8f9fb">
@@ -2390,8 +2415,9 @@ function renderS5Chat(){
     </div>
     <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap">
       <button class="btn btn-secondary" onclick="s5GoChangeChoice()" style="flex:1;min-width:180px;margin-top:0">← אני רוצה לבחור הודעה אחרת</button>
-      <button class="btn btn-primary" onclick="s5ConfirmSame()" style="flex:1;min-width:180px;margin-top:0">המשך עם הבחירה הזו ←</button>
+      <button class="btn btn-primary" id="s5ConfirmBtn" onclick="s5ConfirmSame()" style="flex:1;min-width:180px;margin-top:0;display:none">המשך עם הבחירה הזו ←</button>
     </div>
+    <div id="s5HintMsg" style="text-align:center;font-size:13px;color:var(--text2);margin-top:8px">💬 שאל/י את דנה שאלה, או בחר/י אחת מהשאלות המוצעות</div>
   </div></div>`;
   s5UpdateRounds();
 }
@@ -2402,6 +2428,10 @@ function s5QuickReply(btn,text){
   if(qr){s5AddMsg('user',text);ST.chatHistory.push({role:'user',content:text});ST.chatRounds++;s5UpdateRounds();
     const r=ST.cond==='C'?qr.reply_c:qr.reply_b;
     ST.chatHistory.push({role:'assistant',content:r});s5AddMsg('ai',r);}
+  const confirmBtn=document.getElementById('s5ConfirmBtn');
+  const hintMsg=document.getElementById('s5HintMsg');
+  if(confirmBtn)confirmBtn.style.display='block';
+  if(hintMsg)hintMsg.style.display='none';
 }
 async function s5SendMsg(){
   if(ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS)return;
@@ -2411,6 +2441,8 @@ async function s5SendMsg(){
   if(!ST.chatFirstMsgTime['S5'])ST.chatFirstMsgTime['S5']=Date.now();
   s5AddMsg('user',text);s5UpdateRounds();
   document.getElementById('s5qr')&&(document.getElementById('s5qr').style.display='none');
+  const s5cb=document.getElementById('s5ConfirmBtn');const s5hm=document.getElementById('s5HintMsg');
+  if(s5cb)s5cb.style.display='block';if(s5hm)s5hm.style.display='none';
   s5ShowTyping();const reply=await s5CallLLM();s5HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s5AddMsg('ai',reply);}
 }
@@ -2503,7 +2535,7 @@ async function rScenarioOriginal(){
   <div class="chat-area" id="chatArea">
     <div class="chat-header">
       <div class="avatar">${hasAI?'🤖':'💬'}</div>
-      <div><div class="name">${hasAI?'המנהל הדיגיטלי':'תיבת החלטה'}</div><div class="status">${hasAI?'מקוון':''}</div></div>
+      <div><div class="name">דנה</div><div class="status">${hasAI?'מקוון':''}</div></div>
     </div>
     <div class="chat-messages" id="chatMsgs">
       ${hasAI?'<div class="typing" id="typing"><span></span><span></span><span></span></div>':''}
@@ -2721,7 +2753,7 @@ function rLikert1(){
   const i=ST.cur;
   const qText1 = ST.cond==='A'
     ? 'עד כמה הסתמכת על מידע חיצוני (מעבר לנתונים שהוצגו) בקבלת ההחלטה?'
-    : 'עד כמה הסתמכת על המנהל הדיגיטלי בקבלת ההחלטה?';
+    : 'עד כמה הסתמכת על דנה בקבלת ההחלטה?';
   app.innerHTML=`<div class="screen">${pBar()}<div class="card">
     <span class="scenario-badge">תרחיש ${i+1} — שאלות</span>
 
@@ -2789,7 +2821,7 @@ function rManipCheck(){
       </div>
 
       <div style="margin:24px 0">
-        <div class="likert-q">3. ${isA ? 'עד כמה היה לך קל לקבל החלטות ללא סיוע חיצוני?' : 'עד כמה את/ה סומכ/ת על המנהל הדיגיטלי שליווה אותך?'}</div>
+        <div class="likert-q">3. ${isA ? 'עד כמה היה לך קל לקבל החלטות ללא סיוע חיצוני?' : 'עד כמה את/ה סומכ/ת על דנה שליוותה אותך?'}</div>
         <div class="likert-scale" id="mc3Scale">${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="mc3" value="${n}"><span class="lk">${n}</span></label>`).join('')}</div>
         <div class="likert-anchors"><span>בכלל לא</span><span>במידה רבה מאוד</span></div>
       </div>
