@@ -1289,7 +1289,7 @@ async function s1SendFirst(instructions){
   // instructions is a system-level prompt, not shown to user
   // push as user message internally so LLM gets context
   ST.chatHistory.push({role:'user', content:instructions});
-  s1ShowTyping();
+  {const cb=document.getElementById('s1ConfirmBtn');if(cb)cb.disabled=true;} s1ShowTyping();
   const reply = await s1CallLLM();
   s1HideTyping();
   // Remove the instructions from history, keep only AI reply
@@ -1329,7 +1329,7 @@ async function s1SendMsg(){
   if(qr) qr.style.display='none';
   const s1cb=document.getElementById('s1ConfirmBtn');const s1hm=document.getElementById('s1HintMsg');
   if(s1cb)s1cb.style.display='block';if(s1hm)s1hm.style.display='none';
-  s1ShowTyping();
+  {const cb=document.getElementById('s1ConfirmBtn');if(cb)cb.disabled=true;} s1ShowTyping();
   const reply=await s1CallLLM();
   s1HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s1AddMsg('ai',reply);}
@@ -1349,7 +1349,7 @@ function s1ShowTyping(){
   t.innerHTML='<span></span><span></span><span></span>';
   msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;
 }
-function s1HideTyping(){document.getElementById('s1typing')?.remove();}
+function s1HideTyping(){document.getElementById('s1typing')?.remove();const cb=document.getElementById('s1ConfirmBtn');if(cb)cb.disabled=false;}
 
 function s1UpdateRounds(){
   const el=document.getElementById('roundsLeft');
@@ -1661,7 +1661,7 @@ async function s2SendMsg(){
   document.getElementById('s2quickReplies')?.style && (document.getElementById('s2quickReplies').style.display='none');
   const s2cb=document.getElementById('s2ConfirmBtn');const s2hm=document.getElementById('s2HintMsg');
   if(s2cb)s2cb.style.display='block';if(s2hm)s2hm.style.display='none';
-  s2ShowTyping();
+  {const cb=document.getElementById('s2ConfirmBtn');if(cb)cb.disabled=true;} s2ShowTyping();
   const reply=await s2CallLLM();
   s2HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s2AddMsg('ai',reply);}
@@ -1678,7 +1678,7 @@ function s2ShowTyping(){
   t.innerHTML='<span></span><span></span><span></span>';
   msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;
 }
-function s2HideTyping(){document.getElementById('s2typing')?.remove();}
+function s2HideTyping(){document.getElementById('s2typing')?.remove();const cb=document.getElementById('s2ConfirmBtn');if(cb)cb.disabled=false;}
 function s2UpdateRounds(){
   const el=document.getElementById('roundsLeft');
   if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;
@@ -1962,7 +1962,7 @@ async function s3SendMsg(){
   document.getElementById('s3quickReplies')?.style&&(document.getElementById('s3quickReplies').style.display='none');
   const s3cb=document.getElementById('s3ConfirmBtn');const s3hm=document.getElementById('s3HintMsg');
   if(s3cb)s3cb.style.display='block';if(s3hm)s3hm.style.display='none';
-  s3ShowTyping();
+  {const cb=document.getElementById('s3ConfirmBtn');if(cb)cb.disabled=true;} s3ShowTyping();
   const reply=await s3CallLLM();
   s3HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s3AddMsg('ai',reply);}
@@ -1970,7 +1970,7 @@ async function s3SendMsg(){
 
 function s3AddMsg(role,text){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function s3ShowTyping(){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const t=document.createElement('div');t.className='typing';t.id='s3typing';t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;}
-function s3HideTyping(){document.getElementById('s3typing')?.remove();}
+function s3HideTyping(){document.getElementById('s3typing')?.remove();const cb=document.getElementById('s3ConfirmBtn');if(cb)cb.disabled=false;}
 function s3UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
 function s3GoChangeChoice(){ST.s3.firstChoice=null;ST.s3.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS3Choose();}
 function s3ConfirmSame(){ST.s3.finalChoice=ST.s3.firstChoice;s3GoLikert();}
@@ -2210,13 +2210,13 @@ async function s4SendMsg(){
   document.getElementById('s4quickReplies')?.style&&(document.getElementById('s4quickReplies').style.display='none');
   const s4cb=document.getElementById('s4ConfirmBtn');const s4hm=document.getElementById('s4HintMsg');
   if(s4cb)s4cb.style.display='block';if(s4hm)s4hm.style.display='none';
-  s4ShowTyping();const reply=await s4CallLLM();s4HideTyping();
+  {const cb=document.getElementById('s4ConfirmBtn');if(cb)cb.disabled=true;} s4ShowTyping();const reply=await s4CallLLM();s4HideTyping();
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s4AddMsg('ai',reply);}
 }
 
 function s4AddMsg(role,text){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function s4ShowTyping(){const msgs=document.getElementById('chatMsgs');if(!msgs)return;const t=document.createElement('div');t.className='typing';t.id='s4typing';t.innerHTML='<span></span><span></span><span></span>';msgs.appendChild(t);msgs.scrollTop=msgs.scrollHeight;}
-function s4HideTyping(){document.getElementById('s4typing')?.remove();}
+function s4HideTyping(){document.getElementById('s4typing')?.remove();const cb=document.getElementById('s4ConfirmBtn');if(cb)cb.disabled=false;}
 function s4UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const btn=document.getElementById('sendBtn');if(btn)btn.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const inp=document.getElementById('chatText');if(inp)inp.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
 function s4GoChangeChoice(){ST.s4.firstChoice=null;ST.s4.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS4Choose();}
 function s4ConfirmSame(){ST.s4.finalChoice=ST.s4.firstChoice;s4GoLikert();}
@@ -2447,8 +2447,8 @@ async function s5SendMsg(){
   if(reply){ST.chatHistory.push({role:'assistant',content:reply});s5AddMsg('ai',reply);}
 }
 function s5AddMsg(role,text){const m=document.getElementById('chatMsgs');if(!m)return;const d=document.createElement('div');d.className=`msg ${role}`;d.textContent=text;m.appendChild(d);m.scrollTop=m.scrollHeight;}
-function s5ShowTyping(){const m=document.getElementById('chatMsgs');if(!m)return;const t=document.createElement('div');t.className='typing';t.id='s5t';t.innerHTML='<span></span><span></span><span></span>';m.appendChild(t);m.scrollTop=m.scrollHeight;}
-function s5HideTyping(){document.getElementById('s5t')?.remove();}
+function s5ShowTyping(){const m=document.getElementById('chatMsgs');if(!m)return;const t=document.createElement('div');t.className='typing';t.id='s5t';t.innerHTML='<span></span><span></span><span></span>';m.appendChild(t);m.scrollTop=m.scrollHeight;const cb=document.getElementById('s5ConfirmBtn');if(cb)cb.disabled=true;}
+function s5HideTyping(){document.getElementById('s5t')?.remove();const cb=document.getElementById('s5ConfirmBtn');if(cb)cb.disabled=false;}
 function s5UpdateRounds(){const el=document.getElementById('roundsLeft');if(el)el.textContent=`${CONFIG.MAX_CHAT_ROUNDS-ST.chatRounds} שאלות נותרו`;const b=document.getElementById('sendBtn');if(b)b.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;const i=document.getElementById('chatText');if(i)i.disabled=ST.chatRounds>=CONFIG.MAX_CHAT_ROUNDS;}
 function s5GoChangeChoice(){ST.s5.firstChoice=null;ST.s5.finalChoice=null;ST.chatHistory=[];ST.chatRounds=0;renderS5Choose();}
 function s5ConfirmSame(){ST.s5.finalChoice=ST.s5.firstChoice;s5GoLikert();}
